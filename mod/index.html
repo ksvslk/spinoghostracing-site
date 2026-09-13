@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spino Ghost Racing — moderation</title>
+<!--
+  THE MODERATION DESK. One static page, no build, no server of its own: it talks
+  to the same Supabase project the game does, as a signed-in moderator (a
+  players row with moderator = true), through the security-definer RPCs in
+  supabase_schema.sql — open_reports, mod_tracks, mod_cups, mod_players,
+  mod_log, hide_track, review_cup, remove_time, ban_player, unban_player,
+  resolve_reports. Every action is logged in mod_actions by the database.
+
+  Host it anywhere static (GitHub Pages, a bucket) or open the file locally.
+  First visit asks for the project URL and anon key; they stay in localStorage.
+-->
+<style>
+  :root { color-scheme: dark; --bg:#0f1015; --card:#0e0e14; --ink:#fff; --muted:#9ca3af;
+          --edge:rgba(255,255,255,.1); --red:#ef4444; --gold:#eab308; --green:#22c55e; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  header { display:flex; align-items:center; gap:16px; padding:14px 20px; border-bottom:1px solid var(--edge); }
+  header h1 { font-size:16px; margin:0; letter-spacing:.04em; text-transform:uppercase; }
+  header .who { color:var(--muted); margin-left:auto; }
+  nav { display:flex; gap:6px; padding:12px 20px 0; flex-wrap:wrap; }
+  nav button { background:#18181b; color:var(--muted); border:1px solid var(--edge); border-radius:10px; padding:8px 14px; cursor:pointer; font-weight:600; }
+  nav button.on { background:#fff; color:#000; }
+  main { padding:16px 20px 40px; }
+  .card { background:var(--card); border:1px solid var(--edge); border-radius:14px; padding:14px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--edge); vertical-align:top; }
+  th { color:var(--muted); font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.04em; }
+  .pill.red { background:rgba(239,68,68,.18); color:#fca5a5; }
+  .pill.gold { background:rgba(234,179,8,.18); color:#fde68a; }
+  .pill.green { background:rgba(34,197,94,.18); color:#86efac; }
+  .pill.grey { background:rgba(255,255,255,.08); color:var(--muted); }
+  .act { display:flex; gap:6px; flex-wrap:wrap; }
+  .act button, form button, .row button { background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:12px; font-weight:600; }
+  .act button.danger { border-color:var(--red); color:#fca5a5; }
+  .act button.primary, form button.primary { background:var(--red); border-color:var(--red); }
+  input, select { background:#000; color:var(--ink); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:8px 10px; font:inherit; }
+  form { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .muted { color:var(--muted); }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#000; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; opacity:0; transition:opacity .2s; pointer-events:none; }
+  .toast.on { opacity:1; }
+  .empty { color:var(--muted); padding:20px; text-align:center; }
+  @media (max-width: 720px) { th:nth-child(n+4), td:nth-child(n+4):not(:last-child) { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spino Ghost Racing · Moderation</h1>
+  <span class="who" id="who"></span>
+  <button id="signout" hidden>Sign out</button>
+</header>
+<nav id="nav" hidden>
+  <button data-tab="reports" class="on">Reports <span id="n-reports"></span></button>
+  <button data-tab="cups">Cups</button>
+  <button data-tab="tracks">Tracks</button>
+  <button data-tab="players">Players</button>
+  <button data-tab="log">Log</button>
+</nav>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const main = $('#main');
+  let sb = null, me = null, tab = 'reports';
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const when = (t) => t ? new Date(t).toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+  const toast = (msg) => { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 1800); };
+
+  // ---------------------------------------------------------- configuration
+  function config() {
+    return { url: localStorage.getItem('sgr.url') || '', key: localStorage.getItem('sgr.anon') || '' };
+  }
+  function askConfig() {
+    const c = config();
+    main.innerHTML = `
+      <div class="card">
+        <h2>Connect</h2>
+        <p class="muted">The project URL and anon key from Supabase › Project settings › API. Kept in this browser only.</p>
+        <form id="cfg">
+          <input name="url" placeholder="https://xxxx.supabase.co" value="${esc(c.url)}" size="40" required>
+          <input name="key" placeholder="anon key" value="${esc(c.key)}" size="40" required>
+          <button class="primary">Save</button>
+        </form>
+      </div>`;
+    $('#cfg').onsubmit = (e) => {
+      e.preventDefault();
+      localStorage.setItem('sgr.url', e.target.url.value.trim());
+      localStorage.setItem('sgr.anon', e.target.key.value.trim());
+      boot();
+    };
+  }
+
+  // ------------------------------------------------------------------ auth
+  function askLogin(note = '') {
+    main.innerHTML = `
+      <div class="card">
+        <h2>Sign in</h2>
+        <p class="muted">A moderator account: an email login whose players row has moderator = true. ${esc(note)}</p>
+        <form id="login">
+          <input name="email" type="email" placeholder="email" required>
+          <input name="password" type="password" placeholder="password" required>
+          <button class="primary">Sign in</button>
+          <button type="button" id="recfg">Change project</button>
+        </form>
+      </div>`;
+    $('#login').onsubmit = async (e) => {
+      e.preventDefault();
+      const { error } = await sb.auth.signInWithPassword({ email: e.target.email.value, password: e.target.password.value });
+      if (error) return toast(error.message);
+      boot();
+    };
+    $('#recfg').onclick = () => { localStorage.removeItem('sgr.url'); askConfig(); };
+  }
+
+  async function boot() {
+    const c = config();
+    if (!c.url || !c.key) return askConfig();
+    sb = window.supabase.createClient(c.url, c.key);
+    const { data } = await sb.auth.getUser();
+    if (!data?.user) return askLogin();
+    const row = await sb.from('players').select('username, moderator').eq('id', data.user.id).maybeSingle();
+    if (!row.data?.moderator) {
+      await sb.auth.signOut();
+      return askLogin('That account is not a moderator.');
+    }
+    me = { id: data.user.id, username: row.data.username };
+    $('#who').textContent = `u/${me.username}`;
+    $('#signout').hidden = false;
+    $('#nav').hidden = false;
+    show(tab);
+  }
+  $('#signout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  $('#nav').onclick = (e) => { const b = e.target.closest('button'); if (b) show(b.dataset.tab); };
+
+  // ------------------------------------------------------------------ rpc
+  async function rpc(fn, args = {}) {
+    const { data, error } = await sb.rpc(fn, args);
+    if (error) { toast(error.message); throw error; }
+    return data;
+  }
+  async function act(fn, args, done) {
+    try { await rpc(fn, args); toast(done); show(tab); } catch (_) {}
+  }
+  const reason = (what) => prompt(`Reason (shown in the log${what ? ' and to the author' : ''}):`, '') ?? null;
+
+  // ---------------------------------------------------------------- views
+  async function show(which) {
+    tab = which;
+    for (const b of $('#nav').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === which);
+    main.innerHTML = '<div class="empty">Loading…</div>';
+    try {
+      await ({ reports, cups, tracks, players, log })[which]();
+    } catch (e) {
+      main.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    }
+  }
+
+  function table(head, rows, empty) {
+    if (!rows.length) return `<div class="empty">${esc(empty)}</div>`;
+    return `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  }
+
+  async function reports() {
+    const rows = await rpc('open_reports', { p_limit: 200 });
+    $('#n-reports').textContent = rows.length ? `(${rows.length})` : '';
+    main.innerHTML = `<div class="card">
+      <p class="muted">Everything players flagged and nobody has looked at. Three distinct reports already hid the piece; act, then resolve to clear the queue.</p>
+      ${table(['What', 'By', 'Reports', 'Reasons', 'Last', ''], rows.map((r) => `
+        <tr>
+          <td><span class="pill ${r.kind === 'cup' ? 'gold' : 'grey'}">${esc(r.kind)}</span> <b>${esc(r.title)}</b><br><span class="muted">${esc(r.target)}</span></td>
+          <td>${esc(r.author || '—')}</td>
+          <td class="num">${r.reports}</td>
+          <td>${esc(r.reasons)}</td>
+          <td class="muted">${when(r.last_at)}</td>
+          <td class="act">
+            ${r.kind === 'track'
+              ? `<button class="danger" data-a="hide" data-t="${esc(r.target)}">Hide</button>
+                 <button data-a="unhide" data-t="${esc(r.target)}">Restore</button>`
+              : `<button class="danger" data-a="reject" data-t="${esc(r.target)}">Reject</button>
+                 <button data-a="approve" data-t="${esc(r.target)}">Restore</button>`}
+            <button data-a="resolve" data-k="${esc(r.kind)}" data-t="${esc(r.target)}">Resolve</button>
+          </td>
+        </tr>`), 'No open reports.')}
+    </div>`;
+    main.onclick = (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const t = b.dataset.t;
+      switch (b.dataset.a) {
+        case 'hide': { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); break; }
+        case 'unhide': act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored'); break;
+        case 'reject': { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); break; }
+        case 'approve': act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live'); break;
+        case 'resolve': act('resolve_reports', { p_kind: b.dataset.k, p_target: t }, 'Resolved'); break;
+      }
+    };
+  }
+
+  async function cups() {
+    const rows = await rpc('mod_cups', { p_limit: 200 });
+    main.innerHTML = `<div class="card">
+      <p class="muted">Every championship. Pending ones came from a direct insert or were pulled for review; approve to show, reject to take down.</p>
+      ${table(['Cup', 'By', 'Stages', 'Status', 'Reports', 'Made', ''], rows.map((c) => `
+        <tr>
+          <td><b>${esc(c.name)}</b><br><span class="muted">${esc(c.id)}</span></td>
+          <td>${esc(c.author || '—')}</td>
+          <td class="num">${c.stages}</td>
+          <td><span class="pill ${c.status === 'approved' ? 'green' : c.status === 'pending' ? 'gold' : 'red'}">${esc(c.status)}</span>${c.rejection ? `<br><span class="muted">${esc(c.rejection)}</span>` : ''}</td>
+          <td class="num">${c.reports}</td>
+          <td class="muted">${when(c.created_at)}</td>
+          <td class="act">
+            ${c.status !== 'approved' ? `<button data-a="approve" data-t="${esc(c.id)}">Approve</button>` : ''}
+            ${c.status !== 'rejected' ? `<button class="danger" data-a="reject" data-t="${esc(c.id)}">Reject</button>` : ''}
+          </td>
+        </tr>`), 'No cups yet.')}
+    </div>`;
+    main.onclick = (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      if (b.dataset.a === 'approve') act('review_cup', { p_cup: b.dataset.t, p_approve: true, p_reason: '' }, 'Cup live');
+      else { const why = reason(true); if (why !== null) act('review_cup', { p_cup: b.dataset.t, p_approve: false, p_reason: why }, 'Cup rejected'); }
+    };
+  }
+
+  async function tracks() {
+    const rows = await rpc('mod_tracks', { p_limit: 200 });
+    main.innerHTML = `<div class="card">
+      <p class="muted">Published tracks, newest first. Hidden ones leave the feed and every board but keep their data for an appeal.</p>
+      ${table(['Track', 'By', 'State', 'Reports', 'Published', ''], rows.map((t) => `
+        <tr>
+          <td><b>${esc(t.name)}</b><br><span class="muted">${esc(t.key)}</span></td>
+          <td>${esc(t.author || '—')}</td>
+          <td><span class="pill ${t.hidden ? 'red' : 'green'}">${t.hidden ? 'hidden' : 'showing'}</span></td>
+          <td class="num">${t.reports}</td>
+          <td class="muted">${when(t.created_at)}</td>
+          <td class="act">
+            ${t.hidden ? `<button data-a="unhide" data-t="${esc(t.key)}">Restore</button>`
+                       : `<button class="danger" data-a="hide" data-t="${esc(t.key)}">Hide</button>`}
+            <button data-a="time" data-t="${esc(t.key)}">Remove a time…</button>
+          </td>
+        </tr>`), 'No published tracks yet.')}
+    </div>`;
+    main.onclick = async (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const t = b.dataset.t;
+      if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); }
+      else if (b.dataset.a === 'unhide') act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored');
+      else if (b.dataset.a === 'time') {
+        const who = prompt('Remove whose time? Username:', ''); if (!who) return;
+        const p = await sb.from('players').select('id').ilike('username', who).maybeSingle();
+        if (!p.data) return toast('No such player');
+        const why = reason(); if (why === null) return;
+        act('remove_time', { p_track: t, p_player: p.data.id, p_reason: why }, 'Time removed');
+      }
+    };
+  }
+
+  async function players(query = '') {
+    const rows = await rpc('mod_players', { p_query: query, p_limit: 100 });
+    main.innerHTML = `<div class="card">
+      <form id="find"><input name="q" placeholder="username" value="${esc(query)}"><button>Find</button></form>
+    </div>
+    <div class="card">
+      ${table(['Player', 'State', 'Joined', ''], rows.map((p) => `
+        <tr>
+          <td><b>${esc(p.username || '(no name)')}</b>${p.moderator ? ' <span class="pill gold">mod</span>' : ''}<br><span class="muted">${esc(p.id)}</span></td>
+          <td>${p.banned ? '<span class="pill red">banned</span>' : p.suspended_until && new Date(p.suspended_until) > new Date() ? `<span class="pill gold">suspended until ${when(p.suspended_until)}</span>` : '<span class="pill green">ok</span>'}</td>
+          <td class="muted">${when(p.created_at)}</td>
+          <td class="act">
+            ${p.banned || (p.suspended_until && new Date(p.suspended_until) > new Date())
+              ? `<button data-a="unban" data-t="${esc(p.id)}">Lift</button>`
+              : `<button data-a="suspend" data-t="${esc(p.id)}">Suspend 7 days</button>
+                 <button class="danger" data-a="ban" data-t="${esc(p.id)}">Ban</button>`}
+          </td>
+        </tr>`), 'Nobody matches.')}
+    </div>`;
+    $('#find').onsubmit = (e) => { e.preventDefault(); players(e.target.q.value.trim()); };
+    main.onclick = (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const t = b.dataset.t;
+      if (b.dataset.a === 'unban') act('unban_player', { p_player: t }, 'Lifted');
+      else if (b.dataset.a === 'suspend') { const why = reason(); if (why !== null) act('ban_player', { p_player: t, p_until: new Date(Date.now() + 7 * 864e5).toISOString(), p_reason: why }, 'Suspended'); }
+      else if (b.dataset.a === 'ban') { const why = reason(); if (why !== null && confirm('Ban permanently?')) act('ban_player', { p_player: t, p_until: null, p_reason: why }, 'Banned'); }
+    };
+  }
+
+  async function log() {
+    const rows = await rpc('mod_log', { p_limit: 200 });
+    main.innerHTML = `<div class="card">
+      ${table(['When', 'Action', 'Target', 'Reason', 'Moderator'], rows.map((a) => `
+        <tr>
+          <td class="muted">${when(a.created_at)}</td>
+          <td><span class="pill grey">${esc(a.action)}</span></td>
+          <td>${esc(a.target)}</td>
+          <td>${esc(a.reason || '')}</td>
+          <td class="muted">${esc(a.moderator)}</td>
+        </tr>`), 'Nothing yet.')}
+    </div>`;
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
