@@ -19,6 +19,9 @@
   :root { color-scheme: dark; --bg:#0f1015; --card:#0e0e14; --ink:#fff; --muted:#9ca3af;
           --edge:rgba(255,255,255,.1); --red:#ef4444; --gold:#eab308; --green:#22c55e; }
   * { box-sizing: border-box; }
+  /* NOTHING SHOWS BEFORE A MODERATOR IS SIGNED IN — not the tabs, not the
+     header. `hidden` must beat the display:flex rules below. */
+  [hidden] { display: none !important; }
   body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   header { display:flex; align-items:center; gap:16px; padding:14px 20px; border-bottom:1px solid var(--edge); }
   header h1 { font-size:16px; margin:0; letter-spacing:.04em; text-transform:uppercase; }
@@ -51,7 +54,7 @@
 </style>
 </head>
 <body>
-<header>
+<header id="head" hidden>
   <h1>Spino Ghost Racing · Moderation</h1>
   <span class="who" id="who"></span>
   <button id="signout" hidden>Sign out</button>
@@ -67,6 +70,11 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Optional: a sibling config.js that sets window.SGR_PROJECT = {url, key}
+     (the project's URL and anon key) so a hosted desk skips the Connect step.
+     The anon key is the public client key the game ships with; the desk's
+     power comes from the moderator sign-in, not the key. -->
+<script src="config.js"></script>
 <script>
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
@@ -79,7 +87,9 @@
 
   // ---------------------------------------------------------- configuration
   function config() {
-    return { url: localStorage.getItem('sgr.url') || '', key: localStorage.getItem('sgr.anon') || '' };
+    const baked = window.SGR_PROJECT || {};
+    return { url: localStorage.getItem('sgr.url') || baked.url || '',
+             key: localStorage.getItem('sgr.anon') || baked.key || '' };
   }
   function askConfig() {
     const c = config();
@@ -106,7 +116,7 @@
     main.innerHTML = `
       <div class="card">
         <h2>Sign in</h2>
-        <p class="muted">A moderator account: an email login whose players row has moderator = true. ${esc(note)}</p>
+        <p class="muted">${esc(note)}</p>
         <form id="login">
           <input name="email" type="email" placeholder="email" required>
           <input name="password" type="password" placeholder="password" required>
@@ -137,6 +147,7 @@
     me = { id: data.user.id, username: row.data.username };
     $('#who').textContent = `u/${me.username}`;
     $('#signout').hidden = false;
+    $('#head').hidden = false;
     $('#nav').hidden = false;
     show(tab);
   }
