@@ -1,0 +1,1 @@
+window.SGR_PROJECT = {url: "https://cjktrgmnchyllpdebudj.supabase.co", key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqa3RyZ21uY2h5bGxwZGVidWRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkyODg3MjUsImV4cCI6MjEwNDg2NDcyNX0.IWscqli5Oe2QJk-G75_DRR_ZOxHTSBeN0pubUZTx0O0"};
