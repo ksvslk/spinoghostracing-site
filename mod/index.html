@@ -248,12 +248,14 @@
       <p class="muted">Published tracks, newest first. Hidden ones leave the feed and every board but keep their data for an appeal.</p>
       ${table(['Track', 'By', 'State', 'Reports', 'Published', ''], rows.map((t) => `
         <tr>
-          <td><b>${esc(t.name)}</b><br><span class="muted">${esc(t.key)}</span></td>
+          <td><b>${esc(t.name)}</b>${t.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(t.key)}</span></td>
           <td>${esc(t.author || '—')}</td>
           <td><span class="pill ${t.hidden ? 'red' : 'green'}">${t.hidden ? 'hidden' : 'showing'}</span></td>
           <td class="num">${t.reports}</td>
           <td class="muted">${when(t.created_at)}</td>
           <td class="act">
+            ${t.pinned ? `<button data-a="unpin" data-t="${esc(t.key)}">Unpin</button>`
+                       : `<button data-a="pin" data-t="${esc(t.key)}">Pin to top</button>`}
             ${t.hidden ? `<button data-a="unhide" data-t="${esc(t.key)}">Restore</button>`
                        : `<button class="danger" data-a="hide" data-t="${esc(t.key)}">Hide</button>`}
             <button data-a="time" data-t="${esc(t.key)}">Remove a time…</button>
@@ -263,7 +265,9 @@
     main.onclick = async (e) => {
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const t = b.dataset.t;
-      if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); }
+      if (b.dataset.a === 'pin') act('pin_track', { p_track: t, p_pinned: true, p_reason: '' }, 'Track pinned');
+      else if (b.dataset.a === 'unpin') act('pin_track', { p_track: t, p_pinned: false, p_reason: '' }, 'Track unpinned');
+      else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); }
       else if (b.dataset.a === 'unhide') act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored');
       else if (b.dataset.a === 'time') {
         const who = prompt('Remove whose time? Username:', ''); if (!who) return;
