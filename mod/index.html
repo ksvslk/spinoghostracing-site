@@ -360,7 +360,7 @@
     const pad = W * 0.14, sw = maxx - minx || 1, sh = maxy - miny || 1;
     const sc = Math.min((W - pad * 2) / sw, (H - pad * 2) / sh);
     const ox = (W - sw * sc) / 2, oy = (H - sh * sc) / 2;
-    const px = (i) => ox + (outline[i] - minx) * sc, py = (i) => oy + (outline[i + 1] - miny) * sc;
+    const px = (i) => ox + (outline[i] - minx) * sc, py = (i) => oy + (outline[i] - miny) * sc;
     ctx.beginPath(); ctx.moveTo(px(0), py(1));
     for (let i = 2; i < outline.length; i += 2) ctx.lineTo(px(i), py(i + 1));
     ctx.closePath();
