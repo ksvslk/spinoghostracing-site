@@ -51,6 +51,27 @@
   .toast.on { opacity:1; }
   .empty { color:var(--muted); padding:20px; text-align:center; }
   @media (max-width: 720px) { th:nth-child(n+4), td:nth-child(n+4):not(:last-child) { display:none; } }
+  /* ---- feed (WYSIWYG) ---- */
+  .subtabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
+  .subtabs button { background:#18181b; color:var(--muted); border:1px solid var(--edge); border-radius:999px; padding:6px 14px; cursor:pointer; font-weight:700; font-size:12px; letter-spacing:.04em; }
+  .subtabs button.on { background:var(--red); color:#0f1015; border-color:var(--red); }
+  .subtabs .sort { margin-left:auto; display:flex; gap:6px; }
+  .subtabs .sort button.on { background:#fff; color:#000; border-color:#fff; }
+  .feedgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px; }
+  .fcard { background:var(--card); border:1px solid var(--edge); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+  .fcard .map { width:100%; aspect-ratio:1/1; display:block; background:#141821; border-bottom:1px solid var(--edge); }
+  .fcard .cup { width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px; background:linear-gradient(160deg,#1a1206,#0e0e14); border-bottom:1px solid var(--edge); }
+  .fcard .cup .n { font-size:34px; font-weight:800; color:var(--gold); font-variant-numeric:tabular-nums; }
+  .fcard .cup .l { font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .fcard .body { padding:11px 12px 12px; display:flex; flex-direction:column; gap:6px; flex:1; }
+  .fcard .nm { font-weight:700; font-size:15px; line-height:1.15; display:flex; align-items:center; gap:6px; }
+  .fcard .by { color:var(--muted); font-size:12px; }
+  .fcard .meta { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; display:flex; gap:12px; flex-wrap:wrap; }
+  .fcard .foot { margin-top:auto; display:flex; align-items:center; gap:8px; padding-top:4px; }
+  .fcard .foot .thumbs { color:var(--muted); font-size:12px; font-variant-numeric:tabular-nums; display:flex; gap:9px; }
+  .fcard .foot button { margin-left:auto; background:transparent; color:var(--ink); border:1px solid rgba(255,255,255,.18); border-radius:8px; padding:6px 11px; cursor:pointer; font-size:12px; font-weight:600; }
+  .fcard .foot button.pinned { background:var(--gold); color:#0f1015; border-color:var(--gold); }
+  .fcard.ispinned { border-color:var(--gold); }
 </style>
 </head>
 <body>
@@ -60,6 +81,7 @@
   <button id="signout" hidden>Sign out</button>
 </header>
 <nav id="nav" hidden>
+  <button data-tab="feed">Feed</button>
   <button data-tab="reports" class="on">Reports <span id="n-reports"></span></button>
   <button data-tab="cups">Cups</button>
   <button data-tab="tracks">Tracks</button>
@@ -107,7 +129,110 @@
       e.preventDefault();
       localStorage.setItem('sgr.url', e.target.url.value.trim());
       localStorage.setItem('sgr.anon', e.target.key.value.trim());
-      boot();
+      // -------------------------------------------------------- feed (WYSIWYG)
+  // What players see, minus the animation: the same daily(), feed() and cups()
+  // RPCs the game reads, drawn as cards with a static minimap, each with a pin.
+  let feedSub = 'home', feedSort = 'top';
+  const PER_METRE = 9.3;
+
+  function drawMap(cv, outline) {
+    const ctx = cv.getContext('2d'); const W = cv.width = cv.clientWidth * 2, H = cv.height = cv.clientHeight * 2;
+    ctx.clearRect(0, 0, W, H);
+    if (!outline || outline.length < 6) return;
+    let minx = Infinity, miny = Infinity, maxx = -Infinity, maxy = -Infinity;
+    for (let i = 0; i < outline.length; i += 2) { const x = outline[i], y = outline[i + 1];
+      if (x < minx) minx = x; if (x > maxx) maxx = x; if (y < miny) miny = y; if (y > maxy) maxy = y; }
+    const pad = W * 0.14, sw = maxx - minx || 1, sh = maxy - miny || 1;
+    const sc = Math.min((W - pad * 2) / sw, (H - pad * 2) / sh);
+    const ox = (W - sw * sc) / 2, oy = (H - sh * sc) / 2;
+    const px = (i) => ox + (outline[i] - minx) * sc, py = (i) => oy + (outline[i + 1] - miny) * sc;
+    ctx.beginPath(); ctx.moveTo(px(0), py(1));
+    for (let i = 2; i < outline.length; i += 2) ctx.lineTo(px(i), py(i + 1));
+    ctx.closePath();
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, W * 0.02);
+    ctx.strokeStyle = 'rgba(255,255,255,.88)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(px(0), py(1), W * 0.03, 0, 7); ctx.fillStyle = '#ef4444'; ctx.fill();
+  }
+
+  function kmOf(outline) {
+    if (!outline || outline.length < 4) return 0;
+    let d = 0; const n = outline.length;
+    for (let i = 0; i < n; i += 2) {
+      const j = (i + 2) % n;
+      d += Math.hypot(outline[i] - outline[j], outline[i + 1] - outline[j + 1]);
+    }
+    return d / PER_METRE / 1000;
+  }
+
+  function trackCard(t, badge) {
+    const km = kmOf(t.outline);
+    return `<div class="fcard ${t.pinned ? 'ispinned' : ''}">
+      <canvas class="map" data-key="${esc(t.key)}"></canvas>
+      <div class="body">
+        <div class="nm">${badge ? '<span class="pill gold">today</span>' : ''}${esc(t.name)}${t.pinned ? ' <span class="pill gold">pinned</span>' : ''}</div>
+        <div class="by">by ${esc(t.author || 'Unknown Racer')}</div>
+        <div class="meta"><span>${km.toFixed(1)} km</span><span>${t.laps} lap${t.laps === 1 ? '' : 's'}</span><span>${t.finishers ?? 0} racers</span></div>
+        <div class="foot"><span class="thumbs">▲ ${t.ups ?? 0}&nbsp;&nbsp;▼ ${t.downs ?? 0}</span>
+          <button class="${t.pinned ? 'pinned' : ''}" data-kind="track" data-t="${esc(t.key)}" data-pin="${t.pinned ? '0' : '1'}">${t.pinned ? 'Unpin' : 'Pin'}</button></div>
+      </div></div>`;
+  }
+
+  function cupCard(c) {
+    const stages = Array.isArray(c.stages) ? c.stages.length : (c.stages || 0);
+    return `<div class="fcard ${c.pinned ? 'ispinned' : ''}">
+      <div class="cup"><div class="n">${stages}</div><div class="l">stage${stages === 1 ? '' : 's'}</div></div>
+      <div class="body">
+        <div class="nm">${esc(c.name)}${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}</div>
+        <div class="by">by ${esc(c.author_name || 'Unknown Racer')}</div>
+        <div class="meta"><span>${c.entrants ?? 0} entrants</span></div>
+        <div class="foot"><span class="thumbs">▲ ${c.ups ?? 0}&nbsp;&nbsp;▼ ${c.downs ?? 0}</span>
+          <button class="${c.pinned ? 'pinned' : ''}" data-kind="cup" data-t="${esc(c.id)}" data-pin="${c.pinned ? '0' : '1'}">${c.pinned ? 'Unpin' : 'Pin'}</button></div>
+      </div></div>`;
+  }
+
+  async function feed() {
+    const sub = `<div class="subtabs">
+      ${['home', 'tracks', 'cups'].map((k) => `<button data-sub="${k}" class="${feedSub === k ? 'on' : ''}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}
+      ${feedSub === 'tracks' ? `<span class="sort">${['top', 'new'].map((k) => `<button data-sort="${k}" class="${feedSort === k ? 'on' : ''}">${k.toUpperCase()}</button>`).join('')}</span>` : ''}
+    </div>`;
+
+    let cards = '', maps = [];
+    if (feedSub === 'home') {
+      const daily = await rpc('daily').catch(() => []);
+      const rows = await rpc('feed', { p_limit: 40, p_offset: 0, p_sort: 'top' });
+      const dailyKey = daily[0]?.key;
+      if (daily[0]) { cards += trackCard(daily[0], true); maps.push(daily[0]); }
+      for (const t of rows) if (t.key !== dailyKey) { cards += trackCard(t, false); maps.push(t); }
+    } else if (feedSub === 'tracks') {
+      const rows = await rpc('feed', { p_limit: 120, p_offset: 0, p_sort: feedSort });
+      for (const t of rows) { cards += trackCard(t, false); maps.push(t); }
+    } else {
+      const rows = await rpc('cups', { p_limit: 120 });
+      for (const c of rows) cards += cupCard(c);
+    }
+
+    main.innerHTML = sub + (cards
+      ? `<div class="feedgrid">${cards}</div>`
+      : `<div class="empty">Nothing here yet — what players see on this feed is empty.</div>`);
+
+    for (const cv of main.querySelectorAll('canvas.map')) {
+      const t = maps.find((m) => m.key === cv.dataset.key);
+      if (t) requestAnimationFrame(() => drawMap(cv, t.outline));
+    }
+
+    main.onclick = (e) => {
+      const s = e.target.closest('button[data-sub]');
+      if (s) { feedSub = s.dataset.sub; return feed(); }
+      const so = e.target.closest('button[data-sort]');
+      if (so) { feedSort = so.dataset.sort; return feed(); }
+      const b = e.target.closest('button[data-kind]'); if (!b) return;
+      const pin = b.dataset.pin === '1';
+      if (b.dataset.kind === 'track') act('pin_track', { p_track: b.dataset.t, p_pinned: pin, p_reason: '' }, pin ? 'Track pinned' : 'Track unpinned');
+      else act('pin_cup', { p_cup: b.dataset.t, p_pinned: pin, p_reason: '' }, pin ? 'Cup pinned' : 'Cup unpinned');
+    };
+  }
+
+  boot();
     };
   }
 
@@ -171,7 +296,7 @@
     for (const b of $('#nav').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === which);
     main.innerHTML = '<div class="empty">Loading…</div>';
     try {
-      await ({ reports, cups, tracks, players, log })[which]();
+      await ({ feed, reports, cups, tracks, players, log })[which]();
     } catch (e) {
       main.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
     }
