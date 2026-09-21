@@ -77,6 +77,10 @@
   .fcard .foot button.pinned { background:var(--gold); color:#0f1015; border-color:var(--gold); }
   .fcard.ispinned { border-color:var(--gold); }
 .stages{display:flex;flex-wrap:wrap;gap:14px;padding:8px 0}.stage{width:160px}.stage canvas{width:160px;height:110px;display:block;background:#0f1015;border-radius:10px;margin-bottom:6px}.small{font-size:12px}button.ghost{padding:2px 8px;font-size:12px;margin-left:6px}
+.teams{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.team{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#cfd2dc}
+.team svg{width:22px;height:22px;background:#0e0e14;border-radius:3px}
+.team .dot{display:inline-block;width:12px;height:12px;border-radius:50%}
 </style>
 </head>
 <body>
@@ -292,7 +296,7 @@
         const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
         return `
         <tr data-cup="${esc(c.id)}">
-          <td><b>${esc(c.name)}</b>${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(c.id)}</span></td>
+          <td><b>${esc(c.name)}</b>${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(c.id)}</span>${teamRow(c.teams)}</td>
           <td>${esc(c.author || '—')}</td>
           <td class="num">${c.stages} <button class="ghost" data-a="stages" data-t="${esc(c.id)}">Show</button></td>
           <td><span class="pill ${c.status === 'approved' ? 'green' : c.status === 'pending' ? 'gold' : 'red'}">${esc(c.status)}</span>${c.rejection ? `<br><span class="muted">${esc(c.rejection)}</span>` : ''}</td>
@@ -485,6 +489,28 @@
       </div></div>`;
   }
 
+  // A TEAM'S BADGE, AS THE PHONES DRAW IT: eight by eight, one character a
+  // pixel — '.' nothing, '1' the team's own colour, 2-8 the fixed paints
+  // (team_logo.gd). Drawn as an SVG so a reviewer sees the pixels a player
+  // drew before approving the cup (2026-09-21).
+  const PAINTS = { 2: '#f5f5f0', 3: '#121217', 4: '#eab308', 5: '#ef4444', 6: '#3b82f6', 7: '#22c55e', 8: '#f97316' };
+  function teamBadge(t) {
+    const colour = /^[0-9a-f]{6}$/i.test(String(t.color || '')) ? '#' + t.color : '#888';
+    const logo = typeof t.logo === 'string' && t.logo.length === 64 ? t.logo : '';
+    let cells = '';
+    for (let i = 0; i < logo.length; i++) {
+      const ch = logo[i]; if (ch === '.') continue;
+      const fill = ch === '1' ? colour : (PAINTS[ch] || 'transparent');
+      cells += `<rect x="${i % 8}" y="${Math.floor(i / 8)}" width="1" height="1" fill="${fill}"/>`;
+    }
+    const svg = logo ? `<svg viewBox="0 0 8 8" shape-rendering="crispEdges">${cells}</svg>`
+                     : `<span class="dot" style="background:${colour}"></span>`;
+    return `<span class="team" title="${esc(t.name || '')}">${svg}${esc(t.name || '')}</span>`;
+  }
+  function teamRow(teams) {
+    return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map(teamBadge).join('')}</div>` : '';
+  }
+
   function cupCard(c) {
     const stages = Array.isArray(c.stages) ? c.stages.length : (c.stages || 0);
     return `<div class="fcard ${c.pinned ? 'ispinned' : ''}">
@@ -493,6 +519,7 @@
         <div class="nm">${esc(c.name)}${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}</div>
         <div class="by">by ${esc(c.author_name || 'Unknown Racer')}</div>
         <div class="meta"><span>${c.entrants ?? 0} entrants</span></div>
+        ${teamRow(c.constructors)}
         <div class="foot"><span class="thumbs">▲ ${c.ups ?? 0}&nbsp;&nbsp;▼ ${c.downs ?? 0}</span>
           <button class="${c.pinned ? 'pinned' : ''}" data-kind="cup" data-t="${esc(c.id)}" data-pin="${c.pinned ? '0' : '1'}">${c.pinned ? 'Unpin' : 'Pin'}</button></div>
       </div></div>`;
