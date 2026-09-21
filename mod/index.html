@@ -289,6 +289,7 @@
   let cupRows = [];
   async function cups() {
     const rows = await rpc('mod_cups', { p_limit: 1000 });
+    pinField = 'pinned';
     rows.sort(feedBefore);
     cupRows = rows;
     main.innerHTML = `<div class="card">
@@ -297,7 +298,7 @@
         const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
         return `
         <tr data-cup="${esc(c.id)}">
-          <td><b>${esc(c.name)}</b>${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(c.id)}</span>${teamRow(c.teams)}</td>
+          <td><b>${esc(c.name)}</b>${pinPills(c, 'Champs')}<br><span class="muted">${esc(c.id)}</span>${teamRow(c.teams)}</td>
           <td>${esc(c.author || '—')}</td>
           <td class="num">${c.stages} <button class="ghost" data-a="stages" data-t="${esc(c.id)}">Show</button></td>
           <td><span class="pill ${c.status === 'approved' ? 'green' : c.status === 'pending' ? 'gold' : 'red'}">${esc(c.status)}</span>${c.rejection ? `<br><span class="muted">${esc(c.rejection)}</span>` : ''}</td>
@@ -308,8 +309,10 @@
           <td class="act">
             ${c.status !== 'approved' ? `<button data-a="approve" data-t="${esc(c.id)}">Approve</button>` : ''}
             ${c.status !== 'rejected' ? `<button class="danger" data-a="reject" data-t="${esc(c.id)}">Reject</button>` : ''}
-            ${c.pinned ? `<button data-a="unpin" data-t="${esc(c.id)}">Unpin</button>`
-                       : `<button data-a="pin" data-t="${esc(c.id)}">Pin to top</button>`}
+            ${c.pinned ? `<button data-a="unpin" data-w="tab" data-t="${esc(c.id)}">Unpin from Champs</button>`
+                       : `<button data-a="pin" data-w="tab" data-t="${esc(c.id)}">Pin on Champs</button>`}
+            ${c.pinned_home ? `<button data-a="unpin" data-w="home" data-t="${esc(c.id)}">Unpin from Home</button>`
+                            : `<button data-a="pin" data-w="home" data-t="${esc(c.id)}">Pin on Home</button>`}
             ${c.hidden ? `<button data-a="unhide" data-t="${esc(c.id)}">Show</button>`
                        : `<button class="danger" data-a="hide" data-t="${esc(c.id)}">Hide</button>`}
           </td>
@@ -323,8 +326,8 @@
       if (b.dataset.a === 'stages') { toggleStages(t); return; }
       if (b.dataset.a === 'approve') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live');
       else if (b.dataset.a === 'reject') { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); }
-      else if (b.dataset.a === 'pin') act('pin_cup', { p_cup: t, p_pinned: true, p_reason: '' }, 'Cup pinned');
-      else if (b.dataset.a === 'unpin') act('pin_cup', { p_cup: t, p_pinned: false, p_reason: '' }, 'Cup unpinned');
+      else if (b.dataset.a === 'pin') act('pin_cup', { p_cup: t, p_pinned: true, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Cup pinned');
+      else if (b.dataset.a === 'unpin') act('pin_cup', { p_cup: t, p_pinned: false, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Cup unpinned');
       else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_cup', { p_cup: t, p_hidden: true, p_reason: why }, 'Cup hidden'); }
       else if (b.dataset.a === 'unhide') act('hide_cup', { p_cup: t, p_hidden: false, p_reason: 'shown' }, 'Cup showing');
     };
@@ -367,20 +370,23 @@
 
   async function tracks() {
     const rows = await rpc('mod_tracks', { p_limit: 1000 });
+    pinField = 'pinned';
     rows.sort(feedBefore);
     main.innerHTML = `<div class="card">
       <p class="muted">Published tracks in the order the game's TRACKS feed shows them: pinned first, then ${feedSort === 'top' ? 'most liked' : 'newest'} first. ${sortChips()}<br>Hidden ones leave the feed and every board but keep their data for an appeal.</p>
       ${table(['Track', 'By', 'State', 'Likes', 'Reports', 'Published', ''], rows.map((t) => `
         <tr>
-          <td><b>${esc(t.name)}</b>${t.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(t.key)}</span></td>
+          <td><b>${esc(t.name)}</b>${pinPills(t, 'Tracks')}<br><span class="muted">${esc(t.key)}</span></td>
           <td>${esc(t.author || '—')}</td>
           <td><span class="pill ${t.hidden ? 'red' : 'green'}">${t.hidden ? 'hidden' : 'showing'}</span></td>
           <td class="num">▲ ${t.ups ?? 0} ▼ ${t.downs ?? 0}</td>
           <td class="num">${t.reports}</td>
           <td class="muted">${when(t.created_at)}</td>
           <td class="act">
-            ${t.pinned ? `<button data-a="unpin" data-t="${esc(t.key)}">Unpin</button>`
-                       : `<button data-a="pin" data-t="${esc(t.key)}">Pin to top</button>`}
+            ${t.pinned ? `<button data-a="unpin" data-w="tab" data-t="${esc(t.key)}">Unpin from Tracks</button>`
+                       : `<button data-a="pin" data-w="tab" data-t="${esc(t.key)}">Pin on Tracks</button>`}
+            ${t.pinned_home ? `<button data-a="unpin" data-w="home" data-t="${esc(t.key)}">Unpin from Home</button>`
+                            : `<button data-a="pin" data-w="home" data-t="${esc(t.key)}">Pin on Home</button>`}
             ${t.hidden ? `<button data-a="unhide" data-t="${esc(t.key)}">Restore</button>`
                        : `<button class="danger" data-a="hide" data-t="${esc(t.key)}">Hide</button>`}
             <button data-a="time" data-t="${esc(t.key)}">Remove a time…</button>
@@ -392,8 +398,8 @@
       if (so) { feedSort = so.dataset.sort; return tracks(); }
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const t = b.dataset.t;
-      if (b.dataset.a === 'pin') act('pin_track', { p_track: t, p_pinned: true, p_reason: '' }, 'Track pinned');
-      else if (b.dataset.a === 'unpin') act('pin_track', { p_track: t, p_pinned: false, p_reason: '' }, 'Track unpinned');
+      if (b.dataset.a === 'pin') act('pin_track', { p_track: t, p_pinned: true, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Track pinned');
+      else if (b.dataset.a === 'unpin') act('pin_track', { p_track: t, p_pinned: false, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Track unpinned');
       else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); }
       else if (b.dataset.a === 'unhide') act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored');
       else if (b.dataset.a === 'time') {
@@ -459,8 +465,12 @@
   // TOP is most liked first, the newer one breaking a tie. The Tracks and
   // Cups tables run by it too, so the desk is a 1:1 reflection of the game.
   const postedAt = (x) => Date.parse(x.created_at || 0) || 0;
+  // A PIN IS PER TAB (2026-09-21): `pinned` is the TRACKS / CHAMPS tab's
+  // pin, `pinned_home` is HOME's. The list being drawn says which one it
+  // orders by, and its buttons set that one.
+  let pinField = 'pinned';
   function feedBefore(a, b) {
-    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+    if (!!a[pinField] !== !!b[pinField]) return a[pinField] ? -1 : 1;
     if (feedSort === 'top' && (a.ups ?? 0) !== (b.ups ?? 0)) return (b.ups ?? 0) - (a.ups ?? 0);
     return postedAt(b) - postedAt(a);
   }
@@ -498,16 +508,27 @@
     return d / PER_METRE / 1000;
   }
 
-  function trackCard(t, badge) {
+  // Where a thing is pinned, as pills; and the one button for the list up.
+  function pinPills(x, tab) {
+    return (x.pinned_home ? ' <span class="pill gold">pinned on Home</span>' : '')
+      + (x.pinned ? ` <span class="pill gold">pinned on ${tab}</span>` : '');
+  }
+  function pinButton(kind, id, x, where, tab) {
+    const on = where === 'home' ? !!x.pinned_home : !!x.pinned;
+    const label = where === 'home' ? 'Home' : tab;
+    return `<button class="${on ? 'pinned' : ''}" data-kind="${kind}" data-t="${esc(id)}" data-where="${where}" data-pin="${on ? '0' : '1'}">${on ? 'Unpin from ' + label : 'Pin on ' + label}</button>`;
+  }
+
+  function trackCard(t, badge, where) {
     const km = kmOf(t.outline);
-    return `<div class="fcard ${t.pinned ? 'ispinned' : ''}">
+    return `<div class="fcard ${(where === 'home' ? t.pinned_home : t.pinned) ? 'ispinned' : ''}">
       <canvas class="map" data-key="${esc(t.key)}"></canvas>
       <div class="body">
-        <div class="nm">${badge ? '<span class="pill gold">today</span>' : ''}${esc(t.name)}${t.pinned ? ' <span class="pill gold">pinned</span>' : ''}</div>
+        <div class="nm">${badge ? '<span class="pill gold">today</span>' : ''}${esc(t.name)}${pinPills(t, 'Tracks')}</div>
         <div class="by">by ${esc(t.author || 'Unknown Racer')}</div>
         <div class="meta"><span>${km.toFixed(1)} km</span><span>${t.laps} lap${t.laps === 1 ? '' : 's'}</span><span>${t.finishers ?? 0} racers</span></div>
         <div class="foot"><span class="thumbs">▲ ${t.ups ?? 0}&nbsp;&nbsp;▼ ${t.downs ?? 0}</span>
-          <button class="${t.pinned ? 'pinned' : ''}" data-kind="track" data-t="${esc(t.key)}" data-pin="${t.pinned ? '0' : '1'}">${t.pinned ? 'Unpin' : 'Pin'}</button></div>
+          ${pinButton('track', t.key, t, where, 'Tracks')}</div>
       </div></div>`;
   }
 
@@ -533,17 +554,17 @@
     return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map(teamBadge).join('')}</div>` : '';
   }
 
-  function cupCard(c) {
+  function cupCard(c, where) {
     const stages = Array.isArray(c.stages) ? c.stages.length : (c.stages || 0);
-    return `<div class="fcard ${c.pinned ? 'ispinned' : ''}">
+    return `<div class="fcard ${(where === 'home' ? c.pinned_home : c.pinned) ? 'ispinned' : ''}">
       <div class="cup"><div class="n">${stages}</div><div class="l">stage${stages === 1 ? '' : 's'}</div></div>
       <div class="body">
-        <div class="nm">${esc(c.name)}${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}</div>
+        <div class="nm">${esc(c.name)}${pinPills(c, 'Champs')}</div>
         <div class="by">by ${esc(c.author_name || 'Unknown Racer')}</div>
         <div class="meta"><span>${c.entrants ?? 0} entrants</span></div>
         ${teamRow(c.constructors)}
         <div class="foot"><span class="thumbs">▲ ${c.ups ?? 0}&nbsp;&nbsp;▼ ${c.downs ?? 0}</span>
-          <button class="${c.pinned ? 'pinned' : ''}" data-kind="cup" data-t="${esc(c.id)}" data-pin="${c.pinned ? '0' : '1'}">${c.pinned ? 'Unpin' : 'Pin'}</button></div>
+          ${pinButton('cup', c.id, c, where, 'Champs')}</div>
       </div></div>`;
   }
 
@@ -555,24 +576,28 @@
     const before = feedBefore;
     let cards = [], maps = [];
     if (feedSub === 'home') {
-      // HOME on the phone: the cups and the tracks, one list, the same rule.
+      // HOME on the phone: the cups and the tracks, one list, ordered by
+      // HOME's own pins — a pin on TRACKS or CHAMPS moves nothing here.
+      pinField = 'pinned_home';
       const [rows, cupRows] = await Promise.all([
         rpc('feed', { p_limit: 240, p_offset: 0, p_sort: feedSort }),
         rpc('cups', { p_limit: 240 }).catch(() => [])]);
       const all = [...rows.map((t) => ({ kind: 'track', row: t })), ...cupRows.map((c) => ({ kind: 'cup', row: c }))];
       all.sort((x, y) => before(x.row, y.row));
       for (const e of all) {
-        if (e.kind === 'track') { cards.push(trackCard(e.row, false)); maps.push(e.row); }
-        else cards.push(cupCard(e.row));
+        if (e.kind === 'track') { cards.push(trackCard(e.row, false, 'home')); maps.push(e.row); }
+        else cards.push(cupCard(e.row, 'home'));
       }
     } else if (feedSub === 'tracks') {
+      pinField = 'pinned';
       const rows = await rpc('feed', { p_limit: 240, p_offset: 0, p_sort: feedSort });
       rows.sort(before);
-      for (const t of rows) { cards.push(trackCard(t, false)); maps.push(t); }
+      for (const t of rows) { cards.push(trackCard(t, false, 'tab')); maps.push(t); }
     } else {
+      pinField = 'pinned';
       const rows = await rpc('cups', { p_limit: 240 });
       rows.sort(before);
-      for (const c of rows) cards.push(cupCard(c));
+      for (const c of rows) cards.push(cupCard(c, 'tab'));
     }
 
     const key = 'feed:' + feedSub;
@@ -602,8 +627,9 @@
       if (so) { feedSort = so.dataset.sort; return feed(); }
       const b = e.target.closest('button[data-kind]'); if (!b) return;
       const pin = b.dataset.pin === '1';
-      if (b.dataset.kind === 'track') act('pin_track', { p_track: b.dataset.t, p_pinned: pin, p_reason: '' }, pin ? 'Track pinned' : 'Track unpinned');
-      else act('pin_cup', { p_cup: b.dataset.t, p_pinned: pin, p_reason: '' }, pin ? 'Cup pinned' : 'Cup unpinned');
+      const where = b.dataset.where || 'tab';
+      if (b.dataset.kind === 'track') act('pin_track', { p_track: b.dataset.t, p_pinned: pin, p_reason: '', p_where: where }, pin ? 'Track pinned' : 'Track unpinned');
+      else act('pin_cup', { p_cup: b.dataset.t, p_pinned: pin, p_reason: '', p_where: where }, pin ? 'Cup pinned' : 'Cup unpinned');
     };
   }
 
