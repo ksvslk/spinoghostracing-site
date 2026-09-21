@@ -293,7 +293,7 @@
     rows.sort(feedBefore);
     cupRows = rows;
     main.innerHTML = `<div class="card">
-      <p class="muted">Every championship, in the order the game's CHAMPS feed shows them: pinned first, then ${feedSort === 'top' ? 'most liked' : 'newest'} first. ${sortChips()}<br>Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
+      <p class="muted">Every championship, in the order the game's CHAMPS feed shows them: pinned first, then newest first.<br>Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
       ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Likes', 'Reports', 'Ends', ''], rows.map((c) => {
         const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
         return `
@@ -373,7 +373,7 @@
     pinField = 'pinned';
     rows.sort(feedBefore);
     main.innerHTML = `<div class="card">
-      <p class="muted">Published tracks in the order the game's TRACKS feed shows them: pinned first, then ${feedSort === 'top' ? 'most liked' : 'newest'} first. ${sortChips()}<br>Hidden ones leave the feed and every board but keep their data for an appeal.</p>
+      <p class="muted">Published tracks in the order the game's TRACKS feed shows them: pinned first, then newest first.<br>Hidden ones leave the feed and every board but keep their data for an appeal.</p>
       ${table(['Track', 'By', 'State', 'Likes', 'Reports', 'Published', ''], rows.map((t) => `
         <tr>
           <td><b>${esc(t.name)}</b>${pinPills(t, 'Tracks')}<br><span class="muted">${esc(t.key)}</span></td>
@@ -458,7 +458,9 @@
   // -------------------------------------------------------- feed (WYSIWYG)
   // What players see, minus the animation: the same daily(), feed() and cups()
   // RPCs the game reads, drawn as cards with a static minimap, each with a pin.
-  let feedSub = 'home', feedSort = 'top';
+  // ONE ORDER (2026-09-22): the game lost its TOP/NEW chip; every list runs
+  // pinned first, then newest, and so does the desk.
+  let feedSub = 'home', feedSort = 'new';
 
   // THE ORDER THE PHONES USE, one rule for every list here (2026-09-21):
   // pinned first whatever the chip says; NEW is newest first by timestamp,
@@ -474,9 +476,7 @@
     if (feedSort === 'top' && (a.ups ?? 0) !== (b.ups ?? 0)) return (b.ups ?? 0) - (a.ups ?? 0);
     return postedAt(b) - postedAt(a);
   }
-  function sortChips() {
-    return `<span class="sort">${['top', 'new'].map((k) => `<button data-sort="${k}" class="${feedSort === k ? 'on' : ''}">${k.toUpperCase()}</button>`).join('')}</span>`;
-  }
+  function sortChips() { return ''; }   // no chip: one order, the game's
   const PER_METRE = 9.3;
 
   function drawMap(cv, outline) {
