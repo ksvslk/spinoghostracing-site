@@ -50,6 +50,10 @@
   .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:#000; border:1px solid var(--edge); border-radius:999px; padding:8px 16px; opacity:0; transition:opacity .2s; pointer-events:none; }
   .toast.on { opacity:1; }
   .empty { color:var(--muted); padding:20px; text-align:center; }
+  .pager { display:flex; align-items:center; gap:10px; padding:10px 0 2px; color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; }
+  .pager button { background:#18181b; color:var(--ink); border:1px solid var(--edge); border-radius:8px; padding:5px 12px; cursor:pointer; font-weight:600; }
+  .pager button[disabled] { opacity:.35; cursor:default; }
+  .pager .n { margin-left:auto; }
   @media (max-width: 720px) { th:nth-child(n+4), td:nth-child(n+4):not(:last-child) { display:none; } }
   /* ---- feed (WYSIWYG) ---- */
   .subtabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
@@ -189,7 +193,34 @@
   const reason = (what) => prompt(`Reason (shown in the log${what ? ' and to the author' : ''}):`, '') ?? null;
 
   // ---------------------------------------------------------------- views
+  // EVERY LIST IS PAGED. Forty rows or two dozen cards at a time, Prev / Next,
+  // the page kept across an action on the same tab and reset on a switch.
+  const PAGE = 40, CARDS = 24;
+  const pages = {};
+  function pageOf(key) { return pages[key] || 0; }
+  function pagerBar(key, total, size) {
+    const n = Math.max(1, Math.ceil(total / size));
+    const at = Math.min(pageOf(key), n - 1); pages[key] = at;
+    const from = total ? at * size + 1 : 0, to = Math.min(total, (at + 1) * size);
+    return `<div class="pager" data-pager="${esc(key)}">
+      <button data-page="prev" ${at <= 0 ? 'disabled' : ''}>‹ Prev</button>
+      <button data-page="next" ${at >= n - 1 ? 'disabled' : ''}>Next ›</button>
+      <span class="n">${from}–${to} of ${total}${n > 1 ? ` · page ${at + 1} of ${n}` : ''}</span>
+    </div>`;
+  }
+  // A pager click is handled before any tab's own handler and never leaves
+  // the page: the list re-renders from what it already holds.
+  main.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-page]'); if (!b || b.disabled) return;
+    const bar = b.closest('[data-pager]'); const key = bar.dataset.pager;
+    pages[key] = pageOf(key) + (b.dataset.page === 'next' ? 1 : -1);
+    e.stopPropagation();
+    const re = rerender[key]; if (re) re();
+  }, true);
+  const rerender = {};
+
   async function show(which) {
+    if (which !== tab) pages[which] = 0;
     tab = which;
     for (const b of $('#nav').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === which);
     main.innerHTML = '<div class="empty">Loading…</div>';
@@ -200,13 +231,22 @@
     }
   }
 
-  function table(head, rows, empty) {
+  function table(head, rows, empty, key) {
     if (!rows.length) return `<div class="empty">${esc(empty)}</div>`;
-    return `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+    key = key || tab;
+    const page = () => {
+      const at = pageOf(key);
+      const slice = rows.slice(at * PAGE, (at + 1) * PAGE);
+      return `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${slice.join('')}</tbody></table>${pagerBar(key, rows.length, PAGE)}`;
+    };
+    rerender[key] = () => {
+      const wrap = main.querySelector(`[data-pagewrap="${key}"]`); if (wrap) wrap.innerHTML = page();
+    };
+    return `<div data-pagewrap="${esc(key)}">${page()}</div>`;
   }
 
   async function reports() {
-    const rows = await rpc('open_reports', { p_limit: 200 });
+    const rows = await rpc('open_reports', { p_limit: 1000 });
     $('#n-reports').textContent = rows.length ? `(${rows.length})` : '';
     main.innerHTML = `<div class="card">
       <p class="muted">Everything players flagged and nobody has looked at. Three distinct reports already hid the piece; act, then resolve to clear the queue.</p>
@@ -244,7 +284,7 @@
   // another round trip.
   let cupRows = [];
   async function cups() {
-    const rows = await rpc('mod_cups', { p_limit: 200 });
+    const rows = await rpc('mod_cups', { p_limit: 1000 });
     cupRows = rows;
     main.innerHTML = `<div class="card">
       <p class="muted">Every championship. Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
@@ -318,7 +358,7 @@
   }
 
   async function tracks() {
-    const rows = await rpc('mod_tracks', { p_limit: 200 });
+    const rows = await rpc('mod_tracks', { p_limit: 1000 });
     main.innerHTML = `<div class="card">
       <p class="muted">Published tracks, newest first. Hidden ones leave the feed and every board but keep their data for an appeal.</p>
       ${table(['Track', 'By', 'State', 'Reports', 'Published', ''], rows.map((t) => `
@@ -355,7 +395,7 @@
   }
 
   async function players(query = '') {
-    const rows = await rpc('mod_players', { p_query: query, p_limit: 100 });
+    const rows = await rpc('mod_players', { p_query: query, p_limit: 500 });
     main.innerHTML = `<div class="card">
       <form id="find"><input name="q" placeholder="username" value="${esc(query)}"><button>Find</button></form>
     </div>
@@ -384,7 +424,7 @@
   }
 
   async function log() {
-    const rows = await rpc('mod_log', { p_limit: 200 });
+    const rows = await rpc('mod_log', { p_limit: 1000 });
     main.innerHTML = `<div class="card">
       ${table(['When', 'Action', 'Target', 'Reason', 'Moderator'], rows.map((a) => `
         <tr>
@@ -464,29 +504,39 @@
       ${feedSub === 'tracks' ? `<span class="sort">${['top', 'new'].map((k) => `<button data-sort="${k}" class="${feedSort === k ? 'on' : ''}">${k.toUpperCase()}</button>`).join('')}</span>` : ''}
     </div>`;
 
-    let cards = '', maps = [];
+    let cards = [], maps = [];
     if (feedSub === 'home') {
-      const daily = await rpc('daily').catch(() => []);
-      const rows = await rpc('feed', { p_limit: 40, p_offset: 0, p_sort: 'top' });
-      const dailyKey = daily[0]?.key;
-      if (daily[0]) { cards += trackCard(daily[0], true); maps.push(daily[0]); }
-      for (const t of rows) if (t.key !== dailyKey) { cards += trackCard(t, false); maps.push(t); }
+      // What the phones show: the feed, pinned first, in the chip's order
+      // (the daily headline is gone from HOME, 2026-09-21).
+      const rows = await rpc('feed', { p_limit: 240, p_offset: 0, p_sort: 'top' });
+      for (const t of rows) { cards.push(trackCard(t, false)); maps.push(t); }
     } else if (feedSub === 'tracks') {
-      const rows = await rpc('feed', { p_limit: 120, p_offset: 0, p_sort: feedSort });
-      for (const t of rows) { cards += trackCard(t, false); maps.push(t); }
+      const rows = await rpc('feed', { p_limit: 240, p_offset: 0, p_sort: feedSort });
+      for (const t of rows) { cards.push(trackCard(t, false)); maps.push(t); }
     } else {
-      const rows = await rpc('cups', { p_limit: 120 });
-      for (const c of rows) cards += cupCard(c);
+      const rows = await rpc('cups', { p_limit: 240 });
+      for (const c of rows) cards.push(cupCard(c));
     }
 
-    main.innerHTML = sub + (cards
-      ? `<div class="feedgrid">${cards}</div>`
+    const key = 'feed:' + feedSub;
+    const grid = () => {
+      const at = pageOf(key);
+      const slice = cards.slice(at * CARDS, (at + 1) * CARDS);
+      return `<div class="feedgrid">${slice.join('')}</div>${pagerBar(key, cards.length, CARDS)}`;
+    };
+    const paint = () => {
+      for (const cv of main.querySelectorAll('canvas.map')) {
+        const t = maps.find((m) => m.key === cv.dataset.key);
+        if (t) requestAnimationFrame(() => drawMap(cv, t.outline));
+      }
+    };
+    rerender[key] = () => {
+      const wrap = main.querySelector(`[data-pagewrap="${key}"]`); if (wrap) { wrap.innerHTML = grid(); paint(); }
+    };
+    main.innerHTML = sub + (cards.length
+      ? `<div data-pagewrap="${esc(key)}">${grid()}</div>`
       : `<div class="empty">Nothing here yet — what players see on this feed is empty.</div>`);
-
-    for (const cv of main.querySelectorAll('canvas.map')) {
-      const t = maps.find((m) => m.key === cv.dataset.key);
-      if (t) requestAnimationFrame(() => drawMap(cv, t.outline));
-    }
+    paint();
 
     main.onclick = (e) => {
       const s = e.target.closest('button[data-sub]');
