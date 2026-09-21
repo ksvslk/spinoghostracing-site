@@ -247,26 +247,38 @@
     const rows = await rpc('mod_cups', { p_limit: 200 });
     cupRows = rows;
     main.innerHTML = `<div class="card">
-      <p class="muted">Every championship. Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down.</p>
-      ${table(['Cup', 'By', 'Stages', 'Status', 'Reports', 'Made', ''], rows.map((c) => `
+      <p class="muted">Every championship. Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
+      ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Reports', 'Ends', ''], rows.map((c) => {
+        const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
+        return `
         <tr data-cup="${esc(c.id)}">
-          <td><b>${esc(c.name)}</b><br><span class="muted">${esc(c.id)}</span></td>
+          <td><b>${esc(c.name)}</b>${c.pinned ? ' <span class="pill gold">pinned</span>' : ''}<br><span class="muted">${esc(c.id)}</span></td>
           <td>${esc(c.author || '—')}</td>
           <td class="num">${c.stages} <button class="ghost" data-a="stages" data-t="${esc(c.id)}">Show</button></td>
           <td><span class="pill ${c.status === 'approved' ? 'green' : c.status === 'pending' ? 'gold' : 'red'}">${esc(c.status)}</span>${c.rejection ? `<br><span class="muted">${esc(c.rejection)}</span>` : ''}</td>
+          <td><span class="pill ${c.hidden ? 'red' : over ? 'gold' : 'green'}">${c.hidden ? 'hidden' : over ? 'over' : 'showing'}</span></td>
           <td class="num">${c.reports}</td>
-          <td class="muted">${when(c.created_at)}</td>
+          <td class="muted">${c.ends_ms ? when(new Date(Number(c.ends_ms)).toISOString()) : '—'}</td>
           <td class="act">
             ${c.status !== 'approved' ? `<button data-a="approve" data-t="${esc(c.id)}">Approve</button>` : ''}
             ${c.status !== 'rejected' ? `<button class="danger" data-a="reject" data-t="${esc(c.id)}">Reject</button>` : ''}
+            ${c.pinned ? `<button data-a="unpin" data-t="${esc(c.id)}">Unpin</button>`
+                       : `<button data-a="pin" data-t="${esc(c.id)}">Pin to top</button>`}
+            ${c.hidden ? `<button data-a="unhide" data-t="${esc(c.id)}">Show</button>`
+                       : `<button class="danger" data-a="hide" data-t="${esc(c.id)}">Hide</button>`}
           </td>
-        </tr>`), 'No cups yet.')}
+        </tr>`; }), 'No cups yet.')}
     </div>`;
     main.onclick = (e) => {
       const b = e.target.closest('button[data-a]'); if (!b) return;
-      if (b.dataset.a === 'stages') { toggleStages(b.dataset.t); return; }
-      if (b.dataset.a === 'approve') act('review_cup', { p_cup: b.dataset.t, p_approve: true, p_reason: '' }, 'Cup live');
-      else { const why = reason(true); if (why !== null) act('review_cup', { p_cup: b.dataset.t, p_approve: false, p_reason: why }, 'Cup rejected'); }
+      const t = b.dataset.t;
+      if (b.dataset.a === 'stages') { toggleStages(t); return; }
+      if (b.dataset.a === 'approve') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live');
+      else if (b.dataset.a === 'reject') { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); }
+      else if (b.dataset.a === 'pin') act('pin_cup', { p_cup: t, p_pinned: true, p_reason: '' }, 'Cup pinned');
+      else if (b.dataset.a === 'unpin') act('pin_cup', { p_cup: t, p_pinned: false, p_reason: '' }, 'Cup unpinned');
+      else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_cup', { p_cup: t, p_hidden: true, p_reason: why }, 'Cup hidden'); }
+      else if (b.dataset.a === 'unhide') act('hide_cup', { p_cup: t, p_hidden: false, p_reason: 'shown' }, 'Cup showing');
     };
   }
 
@@ -281,7 +293,7 @@
     const cup = cupRows.find((c) => c.id === id); if (!cup) return;
     const stages = Array.isArray(cup.stage_list) ? cup.stage_list : [];
     const row = document.createElement('tr'); row.className = 'stagerow';
-    row.innerHTML = `<td colspan="7"><div class="stages">${stages.map((st, i) => `
+    row.innerHTML = `<td colspan="8"><div class="stages">${stages.map((st, i) => `
       <div class="stage" data-key="${esc(st.key || '')}">
         <canvas></canvas>
         <div><b>${i + 1}.</b> ${esc(st.name || st.key || '')}</div>
