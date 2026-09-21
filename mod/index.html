@@ -501,20 +501,38 @@
   async function feed() {
     const sub = `<div class="subtabs">
       ${['home', 'tracks', 'cups'].map((k) => `<button data-sub="${k}" class="${feedSub === k ? 'on' : ''}">${k[0].toUpperCase() + k.slice(1)}</button>`).join('')}
-      ${feedSub === 'tracks' ? `<span class="sort">${['top', 'new'].map((k) => `<button data-sort="${k}" class="${feedSort === k ? 'on' : ''}">${k.toUpperCase()}</button>`).join('')}</span>` : ''}
+      <span class="sort">${['top', 'new'].map((k) => `<button data-sort="${k}" class="${feedSort === k ? 'on' : ''}">${k.toUpperCase()}</button>`).join('')}</span>
     </div>`;
 
+    // THE ORDER THE PHONES USE, one rule: pinned first whatever the chip
+    // says; NEW is newest first by timestamp, TOP is most liked first, the
+    // newer one breaking a tie. Applied here to exactly what the server
+    // hands the phones, so the desk shows the game's feeds as they are.
+    const posted = (x) => Date.parse(x.created_at || 0) || 0;
+    const before = (a, b) => {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1;
+      if (feedSort === 'top' && (a.ups ?? 0) !== (b.ups ?? 0)) return (b.ups ?? 0) - (a.ups ?? 0);
+      return posted(b) - posted(a);
+    };
     let cards = [], maps = [];
     if (feedSub === 'home') {
-      // What the phones show: the feed, pinned first, in the chip's order
-      // (the daily headline is gone from HOME, 2026-09-21).
-      const rows = await rpc('feed', { p_limit: 240, p_offset: 0, p_sort: 'top' });
-      for (const t of rows) { cards.push(trackCard(t, false)); maps.push(t); }
+      // HOME on the phone: the cups and the tracks, one list, the same rule.
+      const [rows, cupRows] = await Promise.all([
+        rpc('feed', { p_limit: 240, p_offset: 0, p_sort: feedSort }),
+        rpc('cups', { p_limit: 240 }).catch(() => [])]);
+      const all = [...rows.map((t) => ({ kind: 'track', row: t })), ...cupRows.map((c) => ({ kind: 'cup', row: c }))];
+      all.sort((x, y) => before(x.row, y.row));
+      for (const e of all) {
+        if (e.kind === 'track') { cards.push(trackCard(e.row, false)); maps.push(e.row); }
+        else cards.push(cupCard(e.row));
+      }
     } else if (feedSub === 'tracks') {
       const rows = await rpc('feed', { p_limit: 240, p_offset: 0, p_sort: feedSort });
+      rows.sort(before);
       for (const t of rows) { cards.push(trackCard(t, false)); maps.push(t); }
     } else {
       const rows = await rpc('cups', { p_limit: 240 });
+      rows.sort(before);
       for (const c of rows) cards.push(cupCard(c));
     }
 
