@@ -294,7 +294,7 @@
     cupRows = rows;
     main.innerHTML = `<div class="card">
       <p class="muted">Every championship, in the order the game's CHAMPS feed shows them: pinned first, then newest first.<br>Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
-      ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Likes', 'Reports', 'Ends', ''], rows.map((c) => {
+      ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Likes', 'Reports', 'Created', 'Ends', ''], rows.map((c) => {
         const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
         return `
         <tr data-cup="${esc(c.id)}">
@@ -305,6 +305,7 @@
           <td><span class="pill ${c.hidden ? 'red' : over ? 'gold' : 'green'}">${c.hidden ? 'hidden' : over ? 'over' : 'showing'}</span></td>
           <td class="num">▲ ${c.ups ?? 0} ▼ ${c.downs ?? 0}</td>
           <td class="num">${c.reports}</td>
+          <td class="muted">${when(c.created_at)}</td>
           <td class="muted">${c.ends_ms ? when(new Date(Number(c.ends_ms)).toISOString()) : '—'}</td>
           <td class="act">
             ${c.status !== 'approved' ? `<button data-a="approve" data-t="${esc(c.id)}">Approve</button>` : ''}
@@ -344,7 +345,7 @@
     const cup = cupRows.find((c) => c.id === id); if (!cup) return;
     const stages = Array.isArray(cup.stage_list) ? cup.stage_list : [];
     const row = document.createElement('tr'); row.className = 'stagerow';
-    row.innerHTML = `<td colspan="9"><div class="stages">${stages.map((st, i) => `
+    row.innerHTML = `<td colspan="10"><div class="stages">${stages.map((st, i) => `
       <div class="stage" data-key="${esc(st.key || '')}">
         <canvas></canvas>
         <div><b>${i + 1}.</b> ${esc(st.name || st.key || '')}</div>
@@ -354,7 +355,7 @@
     const keys = stages.map((st) => st.key).filter((k) => typeof k === 'string' && k.startsWith('pub:'));
     let byKey = {};
     if (keys.length) {
-      const { data, error } = await sb.from('tracks').select('key,name,outline,laps,hidden').in('key', keys);
+      const { data, error } = await sb.from('tracks').select('key,name,outline,laps,hidden,created_at').in('key', keys);
       if (error) toast(error.message);
       for (const t of data || []) byKey[t.key] = t;
     }
@@ -364,7 +365,7 @@
       const t = byKey[key];
       if (!t) { meta.textContent = 'not visible — hidden or gone'; drawMap(cv, null); continue; }
       drawMap(cv, t.outline);
-      meta.textContent = `${kmOf(t.outline).toFixed(1)} km · ${t.laps} laps${t.hidden ? ' · HIDDEN' : ''}`;
+      meta.textContent = `${kmOf(t.outline).toFixed(1)} km · ${t.laps} laps · published ${when(t.created_at)}${t.hidden ? ' · HIDDEN' : ''}`;
     }
   }
 
@@ -526,7 +527,7 @@
       <div class="body">
         <div class="nm">${badge ? '<span class="pill gold">today</span>' : ''}${esc(t.name)}${pinPills(t, 'Tracks')}</div>
         <div class="by">by ${esc(t.author || 'Unknown Racer')}</div>
-        <div class="meta"><span>${km.toFixed(1)} km</span><span>${t.laps} lap${t.laps === 1 ? '' : 's'}</span><span>${t.finishers ?? 0} racers</span></div>
+        <div class="meta"><span>${km.toFixed(1)} km</span><span>${t.laps} lap${t.laps === 1 ? '' : 's'}</span><span>${t.finishers ?? 0} racers</span><span title="published">${when(t.created_at)}</span></div>
         <div class="foot"><span class="thumbs">▲ ${t.ups ?? 0}&nbsp;&nbsp;▼ ${t.downs ?? 0}</span>
           ${pinButton('track', t.key, t, where, 'Tracks')}</div>
       </div></div>`;
@@ -554,6 +555,17 @@
     return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map(teamBadge).join('')}</div>` : '';
   }
 
+  // When a cup's last stage ends: from ends_ms (the desk's rows) or from
+  // its schedule (the feed's rows).
+  function cupEnds(c) {
+    let ends = Number(c.ends_ms);
+    if (!ends && Array.isArray(c.stages) && c.start_ms) {
+      const n = c.stages.length;
+      ends = Number(c.start_ms) + n * Number(c.play_ms || 0) + Math.max(n - 1, 0) * Number(c.break_ms || 0);
+    }
+    return ends ? `<span title="ends">ends ${when(new Date(ends).toISOString())}</span>` : '';
+  }
+
   function cupCard(c, where) {
     const stages = Array.isArray(c.stages) ? c.stages.length : (c.stages || 0);
     return `<div class="fcard ${(where === 'home' ? c.pinned_home : c.pinned) ? 'ispinned' : ''}">
@@ -561,7 +573,7 @@
       <div class="body">
         <div class="nm">${esc(c.name)}${pinPills(c, 'Champs')}</div>
         <div class="by">by ${esc(c.author_name || 'Unknown Racer')}</div>
-        <div class="meta"><span>${c.entrants ?? 0} entrants</span></div>
+        <div class="meta"><span>${c.entrants ?? 0} entrants</span><span title="created">${when(c.created_at)}</span>${cupEnds(c)}</div>
         ${teamRow(c.constructors)}
         <div class="foot"><span class="thumbs">▲ ${c.ups ?? 0}&nbsp;&nbsp;▼ ${c.downs ?? 0}</span>
           ${pinButton('cup', c.id, c, where, 'Champs')}</div>
