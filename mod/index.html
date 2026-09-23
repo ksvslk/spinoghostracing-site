@@ -355,7 +355,7 @@
     const keys = stages.map((st) => st.key).filter((k) => typeof k === 'string' && k.startsWith('pub:'));
     let byKey = {};
     if (keys.length) {
-      const { data, error } = await sb.from('tracks').select('key,name,outline,laps,hidden,created_at').in('key', keys);
+      const { data, error } = await sb.from('tracks').select('key,name,outline,laps,hidden,published,created_at').in('key', keys);
       if (error) toast(error.message);
       for (const t of data || []) byKey[t.key] = t;
     }
@@ -365,7 +365,9 @@
       const t = byKey[key];
       if (!t) { meta.textContent = 'not visible — hidden or gone'; drawMap(cv, null); continue; }
       drawMap(cv, t.outline);
-      meta.textContent = `${kmOf(t.outline).toFixed(1)} km · ${t.laps} laps · published ${when(t.created_at)}${t.hidden ? ' · HIDDEN' : ''}`;
+      // A stage-only track (a cup carried it up unpublished, 2026-09-23) is
+      // not on any feed: said as such, not as published.
+      meta.textContent = `${kmOf(t.outline).toFixed(1)} km · ${t.laps} laps · ${t.published ? 'published' : 'stage only, put up'} ${when(t.created_at)}${t.hidden ? ' · HIDDEN' : ''}`;
     }
   }
 
