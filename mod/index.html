@@ -95,6 +95,7 @@
   <button data-tab="cups">Cups</button>
   <button data-tab="tracks">Tracks</button>
   <button data-tab="players">Players</button>
+  <button data-tab="purchases">Purchases <span id="n-purchases"></span></button>
   <button data-tab="log">Log</button>
 </nav>
 <main id="main"></main>
@@ -229,7 +230,7 @@
     for (const b of $('#nav').querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === which);
     main.innerHTML = '<div class="empty">Loading…</div>';
     try {
-      await ({ feed, reports, cups, tracks, players, log })[which]();
+      await ({ feed, reports, cups, tracks, players, purchases, log })[which]();
     } catch (e) {
       main.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
     }
@@ -280,6 +281,40 @@
         case 'reject': { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); break; }
         case 'approve': act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live'); break;
         case 'resolve': act('resolve_reports', { p_kind: b.dataset.k, p_target: t }, 'Resolved'); break;
+      }
+    };
+  }
+
+  // EVERY PURCHASE THE STORE REPORTED, and what stands for it. The store's
+  // webhook writes the ledger and places boards from the buyer's hold; what
+  // is paid and not standing leads the list in red until someone places or
+  // refunds it and marks it handled.
+  async function purchases() {
+    const rows = await rpc('mod_purchases', { p_limit: 1000 });
+    const open = rows.filter((p) => !p.fulfilled_at && !p.refunded);
+    $('#n-purchases').textContent = open.length ? `(${open.length})` : '';
+    const money = (p) => p.price_cents > 0 ? `${(p.price_cents / 100).toFixed(2)} ${esc(p.currency)}` : '—';
+    const state = (p) => p.refunded ? '<span class="pill grey">refunded</span>'
+      : !p.fulfilled_at ? '<span class="pill red">NOT DELIVERED</span>'
+      : `<span class="pill green">${esc(p.fulfilled_by || 'ok')}</span>`;
+    main.innerHTML = `<div class="card">
+      <p class="muted">Every purchase RevenueCat reported, newest first, the undelivered ones on top. A board is delivered by the phone or by the webhook from the buyer's hold; a pack is the store's to unlock. Anything paid and not standing after an hour was alerted — place it or refund it in the store console, then mark it handled with a word.</p>
+      ${table(['When', 'What', 'By', 'Board', 'State', 'Note', ''], rows.map((p) => `
+        <tr>
+          <td class="muted">${when(p.purchased_at)}<br><span class="muted">${esc(p.store || '')} ${p.environment === 'SANDBOX' ? '· sandbox' : ''}</span></td>
+          <td><b>${esc(p.product)}</b><br>${money(p)}<br><span class="muted">${esc(p.id)}</span></td>
+          <td>${esc(p.username || '—')}</td>
+          <td>${p.track_name ? `<b>${esc(p.track_name)}</b><br><span class="muted">${esc(p.track_key)} · ${esc(p.board_status || '')}</span>` : '<span class="muted">no board</span>'}</td>
+          <td>${state(p)}</td>
+          <td class="muted">${esc(p.note || '')}</td>
+          <td class="act">${!p.fulfilled_at && !p.refunded ? `<button data-a="handle" data-t="${esc(p.id)}">Handled</button>` : ''}</td>
+        </tr>`), 'No purchases yet.')}
+    </div>`;
+    main.onclick = (e) => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      if (b.dataset.a === 'handle') {
+        const note = prompt('What was done (refunded, placed by hand, …):', '');
+        if (note !== null) act('handle_purchase', { p_id: b.dataset.t, p_note: note }, 'Purchase handled');
       }
     };
   }
