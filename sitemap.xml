@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://spinoghostracing.com/</loc>
+    <lastmod>2026-09-25</lastmod>
+    <image:image><image:loc>https://spinoghostracing.com/assets/og.jpg</image:loc></image:image>
+    <image:image><image:loc>https://spinoghostracing.com/assets/shot-01_pack.webp</image:loc></image:image>
+    <image:image><image:loc>https://spinoghostracing.com/assets/shot-02_finish.webp</image:loc></image:image>
+    <image:image><image:loc>https://spinoghostracing.com/assets/shot-03_home.webp</image:loc></image:image>
+    <image:image><image:loc>https://spinoghostracing.com/assets/shot-04_editor.webp</image:loc></image:image>
+    <image:image><image:loc>https://spinoghostracing.com/assets/shot-05_leading.webp</image:loc></image:image>
+    <video:video>
+      <video:thumbnail_loc>https://spinoghostracing.com/assets/trailer-tall.webp</video:thumbnail_loc>
+      <video:title>Spino Ghost Racing gameplay trailer</video:title>
+      <video:description>Ghost laps racing through grass, forest, canyon, red desert, city and snow tracks in Spino Ghost Racing, a free 2D top-down racing game.</video:description>
+      <video:content_loc>https://spinoghostracing.com/assets/trailer-tall.mp4</video:content_loc>
+      <video:duration>17</video:duration>
+      <video:family_friendly>yes</video:family_friendly>
+    </video:video>
+  </url>
+  <url><loc>https://spinoghostracing.com/terms.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://spinoghostracing.com/privacy.html</loc><lastmod>2026-09-25</lastmod></url>
+  <url><loc>https://spinoghostracing.com/delete-account.html</loc><lastmod>2026-09-25</lastmod></url>
+</urlset>
