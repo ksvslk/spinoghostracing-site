@@ -154,7 +154,11 @@
           <input name="email" type="email" placeholder="email" required>
           <input name="password" type="password" placeholder="password" required>
           <button class="primary">Sign in</button>
-          <button type="button" id="recfg">Change project</button>
+          <button type="button" id="mailcode">Email me a code</button>
+        </form>
+        <form id="codeform" hidden>
+          <input name="token" inputmode="numeric" autocomplete="one-time-code" placeholder="code from the mail" required>
+          <button class="primary">Sign in with the code</button>
         </form>
       </div>`;
     $('#login').onsubmit = async (e) => {
@@ -163,7 +167,27 @@
       if (error) return toast(error.message);
       boot();
     };
-    $('#recfg').onclick = () => { localStorage.removeItem('sgr.url'); askConfig(); };
+    // A CODE BY MAIL, NO PASSWORD (2026-10-01): restoring the same racer in
+    // the game by its email code gives the account a fresh device password
+    // (net/supabase.gd sign_in_code), which locked the desk out. The code is
+    // the game's own: the same mail, the same verify.
+    let codeMail = '';
+    $('#mailcode').onclick = async () => {
+      const mail = $('#login').email.value.trim().toLowerCase();
+      if (!mail) return toast('Type the email first.');
+      const { error } = await sb.auth.signInWithOtp({ email: mail, options: { shouldCreateUser: false } });
+      if (error) return toast(error.message);
+      codeMail = mail;
+      $('#codeform').hidden = false;
+      $('#codeform').token.focus();
+      toast(`A code is on its way to ${mail}.`);
+    };
+    $('#codeform').onsubmit = async (e) => {
+      e.preventDefault();
+      const { error } = await sb.auth.verifyOtp({ email: codeMail, token: e.target.token.value.trim(), type: 'email' });
+      if (error) return toast(error.message);
+      boot();
+    };
   }
 
   async function boot() {
