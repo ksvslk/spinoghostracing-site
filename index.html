@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Spino Ghost Racing – 2D Racing Game for Android &amp; iPhone</title>
+<meta name="apple-itunes-app" content="app-id=6753791318">
 <meta name="description" content="Free 2D top-down racing game for Android, iPhone and iPad: race other players' ghost laps, build your own tracks and win championship cups. No ads.">
 <link rel="canonical" href="https://spinoghostracing.com/">
 <meta name="keywords" content="Spino Ghost Racing, ghost racing game, 2D racing game, 2D car racing game, top-down racing game, mobile racing game, Android racing game, iPhone racing game, iPad racing game, async multiplayer racing, race other players, racing game track editor, make your own race tracks, time trial racing, arcade racer, drift racing, championship cups, free racing game no ads, racing game with gamepad">
@@ -80,15 +81,25 @@
       "trailer": { "@id": "https://spinoghostracing.com/#trailer" },
       "author": { "@id": "https://spinoghostracing.com/#indest" },
       "publisher": { "@id": "https://spinoghostracing.com/#indest" },
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock",
-        "url": "https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"
-      },
-      "installUrl": "https://play.google.com/store/apps/details?id=com.indest.spinoghostracing",
+      "offers": [
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://apps.apple.com/app/spino-ghost-racing/id6753791318"
+        },
+        {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"
+        }
+      ],
+      "installUrl": ["https://apps.apple.com/app/spino-ghost-racing/id6753791318", "https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"],
       "sameAs": [
+        "https://apps.apple.com/app/spino-ghost-racing/id6753791318",
         "https://play.google.com/store/apps/details?id=com.indest.spinoghostracing",
         "https://discord.gg/UFEKDDR4n9"
       ]
@@ -112,7 +123,7 @@
         { "@type": "Question", "name": "Can I make my own race tracks?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Draw a circuit in the track editor, drive a proof lap to show it can be finished, and publish it for everyone to race." } },
         { "@type": "Question", "name": "Is it pay-to-win?", "acceptedAnswer": { "@type": "Answer", "text": "No. Speed is never for sale. Paint and sponsor boards change how things look, never how fast you go." } },
         { "@type": "Question", "name": "Do I need an account?", "acceptedAnswer": { "@type": "Answer", "text": "No sign-in and no email. The game makes an account for your phone the first time you open it." } },
-        { "@type": "Question", "name": "What can I play Spino Ghost Racing on?", "acceptedAnswer": { "@type": "Answer", "text": "Android phones and tablets, from Google Play. iPhone and iPad are coming soon on the App Store. Play with touch controls, a keyboard or a gamepad." } }
+        { "@type": "Question", "name": "What can I play Spino Ghost Racing on?", "acceptedAnswer": { "@type": "Answer", "text": "iPhone and iPad from the App Store, and Android phones and tablets from Google Play. Play with touch controls, a keyboard or a gamepad." } }
       ]
     }
   ]
@@ -173,7 +184,18 @@ h1{font-size:clamp(36px,11.2vw,76px);line-height:.9;margin:4px 0 18px}
    its visible edge up with the text instead of adding to the gap. */
 .badge{display:block;margin:-13px}
 .badge img{width:212px;height:auto}
-.soon{display:inline-flex;align-items:center;height:50px;padding:0 18px;border-radius:12px;background:var(--panel-2);color:var(--dim);font-weight:600;font-size:15px}
+/* Apple's badge has no clear space of its own: no negative margin, and the
+   height of the Play badge's visible part. */
+.badge.apple{margin:0}
+.badge.apple img{width:auto;height:55px}
+/* Side by side on a phone too: both a step smaller, the same visible height. */
+@media(max-width:430px){
+  .stores{column-gap:12px}
+  .badge{margin:-11.5px}
+  .badge img{width:180px}
+  .badge.apple{margin:0}
+  .badge.apple img{height:47px}
+}
 .facts{list-style:none;padding:0;margin:24px 0 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .facts li{padding:7px 15px;border-radius:999px;background:var(--panel);font:600 13px/1.2 var(--body);letter-spacing:.08em;text-transform:uppercase;color:#e3e5ea}
 .hero-media{display:flex;justify-content:center}
@@ -268,8 +290,8 @@ footer p{margin:0}
       <h1>Beat the ghost.<br><span class="red">Become the ghost.</span></h1>
       <p class="lede">A 2D top-down racing game where you race other players' recorded laps, and your best lap becomes the ghost they have to beat. Build your own tracks and win cups the players run.</p>
       <div class="stores">
+        <a class="badge apple" href="https://apps.apple.com/app/spino-ghost-racing/id6753791318"><img src="assets/app-store-badge.svg" width="165" height="55" alt="Download on the App Store"></a>
         <a class="badge" href="https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"><img src="assets/google-play-badge.png" width="646" height="250" alt="Get it on Google Play"></a>
-        <span class="soon">Coming soon on iPhone &amp; iPad</span>
       </div>
       <ul class="facts"><li>Free</li><li>No ads</li><li>No sign-in</li></ul>
     </div>
@@ -332,7 +354,7 @@ footer p{margin:0}
     <details><summary>Can I make my own race tracks?</summary><p>Yes. Draw a circuit in the track editor, drive a proof lap to show it can be finished, and publish it for everyone to race.</p></details>
     <details><summary>Is it pay-to-win?</summary><p>No. Speed is never for sale. Paint and sponsor boards change how things look, never how fast you go.</p></details>
     <details><summary>Do I need an account?</summary><p>No sign-in and no email. The game makes an account for your phone the first time you open it.</p></details>
-    <details><summary>What can I play Spino Ghost Racing on?</summary><p>Android phones and tablets, from Google Play. iPhone and iPad are coming soon on the App Store. Play with touch controls, a keyboard or a gamepad.</p></details>
+    <details><summary>What can I play Spino Ghost Racing on?</summary><p>iPhone and iPad from the App Store, and Android phones and tablets from Google Play. Play with touch controls, a keyboard or a gamepad.</p></details>
   </div>
 </section>
 
@@ -341,8 +363,8 @@ footer p{margin:0}
     <img class="final-mascot" src="assets/spino.svg" width="1507" height="1015" alt="" loading="lazy">
     <h2>Chase the ghost.<br><span class="red">Leave one of your own.</span></h2>
     <div class="stores">
+      <a class="badge apple" href="https://apps.apple.com/app/spino-ghost-racing/id6753791318"><img src="assets/app-store-badge.svg" width="165" height="55" alt="Download on the App Store" loading="lazy"></a>
       <a class="badge" href="https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"><img src="assets/google-play-badge.png" width="646" height="250" alt="Get it on Google Play" loading="lazy"></a>
-      <span class="soon">Coming soon on iPhone &amp; iPad</span>
     </div>
   </div>
 </section>
