@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["PGTN5QKRGG.com.indest.spinoghostracing"],
+        "components": [
+          { "/": "/t/*", "comment": "a track" },
+          { "/": "/c/*", "comment": "a championship" }
+        ]
+      }
+    ]
+  }
+}

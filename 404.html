@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Spino Ghost Racing</title>
+<style>
+  body{margin:0;background:#0f1015;color:#f4f4f5;font:16px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;min-height:100vh}
+  main{box-sizing:border-box;width:100%;max-width:420px;padding:32px 24px;text-align:center}
+  .icon{width:96px;height:96px;border-radius:22px;margin:0 auto 16px;display:block}
+  h1{font-size:26px;margin:0 0 12px;color:#eab308}
+  p{color:#cfd2dc;margin:0 0 16px}
+  .open{display:block;margin:0 auto 20px;max-width:280px;padding:14px 18px;border-radius:12px;background:#ef4444;color:#fff;font-weight:700;letter-spacing:.04em;text-decoration:none}
+  .open[hidden]{display:none}
+  .stores{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin:0 0 20px}
+  .stores img{height:48px;width:auto;display:block}
+  .small{font-size:13px;color:#8b8f9c}
+  .small a{color:#8b8f9c}
+</style><link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+</head>
+<body><main>
+  <img class="icon" src="/assets/apple-touch-icon.png" alt="">
+  <h1 id="title">Page not found</h1>
+  <p id="lead">There is nothing at this address. The game is below.</p>
+  <a id="open" class="open" hidden>OPEN IN THE GAME</a>
+  <div class="stores">
+    <a href="https://apps.apple.com/app/spino-ghost-racing/id6753791318"><img src="/assets/app-store-badge.svg" alt="Download on the App Store"></a>
+    <a href="https://play.google.com/store/apps/details?id=com.indest.spinoghostracing"><img src="/assets/google-play-badge.png" alt="Get it on Google Play"></a>
+  </div>
+  <p class="small"><a href="/">spinoghostracing.com</a></p>
+</main>
+<script>
+  // A LINK INTO THE GAME (/t/<track id>, /c/<cup id>) lands on this page when
+  // the phone sent it to the browser: the game is not installed, or the phone
+  // chose the browser this time. The button opens the game with the same link
+  // by the game's own scheme (spinoghostracing://), which the game reads like
+  // the web address.
+  var m = location.pathname.match(/^\/(t|c)\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/?$/);
+  if (m) {
+    var what = m[1] === 't' ? 'A track' : 'A championship';
+    document.title = what + ' in Spino Ghost Racing';
+    document.getElementById('title').textContent = what + ' in Spino Ghost Racing';
+    document.getElementById('lead').textContent = 'Open it in the game. To get the game, pick your store below, then tap the link again.';
+    var open = document.getElementById('open');
+    open.href = 'spinoghostracing://' + m[1] + '/' + m[2].toLowerCase();
+    open.hidden = false;
+  }
+</script>
+</body></html>

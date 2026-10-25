@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.indest.spinoghostracing",
+      "sha256_cert_fingerprints": [
+        "67:94:DD:CE:35:02:8D:9A:97:2F:95:84:26:C5:C0:70:8D:31:BE:51:40:52:67:56:22:77:24:0F:41:53:B8:7A",
+        "46:88:1F:98:66:6F:2B:6D:FD:14:D7:9B:A7:80:23:F2:97:95:C0:8E:47:98:9C:E0:0F:C3:E7:FE:B6:05:79:60"
+      ]
+    }
+  }
+]
