@@ -10,8 +10,9 @@
   to the same Supabase project the game does, as a signed-in moderator (a
   players row with moderator = true), through the security-definer RPCs in
   supabase_schema.sql — open_reports, mod_tracks, mod_cups, mod_players,
-  mod_log, hide_track, review_cup, remove_time, ban_player, unban_player,
-  resolve_reports. Every action is logged in mod_actions by the database.
+  mod_log, hide_track, review_cup, schedule_cup, remove_time, ban_player,
+  unban_player, resolve_reports. Every action is logged in mod_actions by the
+  database.
 
   Host it anywhere static (GitHub Pages, a bucket) or open the file locally.
   First visit asks for the project URL and anon key; they stay in localStorage.
@@ -304,7 +305,7 @@
         case 'hide': { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); break; }
         case 'unhide': act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored'); break;
         case 'reject': { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); break; }
-        case 'approve': act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live'); break;
+        case 'approve': act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup restored'); break;
         case 'resolve': act('resolve_reports', { p_kind: b.dataset.k, p_target: t }, 'Resolved'); break;
       }
     };
@@ -353,22 +354,28 @@
     rows.sort(feedBefore);
     cupRows = rows;
     main.innerHTML = `<div class="card">
-      <p class="muted">Every championship, in the order the game's CHAMPS feed shows them: pinned first, then newest first.<br>Pending ones came from a direct insert or were pulled for review; open the stages to see what a cup is made of, approve to show, reject to take down. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
-      ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Likes', 'Reports', 'Created', 'Ends', ''], rows.map((c) => {
+      <p class="muted">Every championship, in the order the game's CHAMPS feed shows them: pinned first, then newest first.<br>An author's cup waits here, off the feed, until it is approved; open the stages to see what a cup is made of, approve to show it with its start — now, or a day and time ahead (it counts down on the feed until then, and can be entered early) — reject to take it down. Change start moves a start that has not come yet. Hide takes a live cup off the feed without touching its results; a completed cup leaves the feed by itself a day after it ends.</p>
+      ${table(['Cup', 'By', 'Stages', 'Status', 'Feed', 'Likes', 'Reports', 'Created', 'Starts', 'Ends', ''], rows.map((c) => {
         const over = Number(c.ends_ms) > 0 && Number(c.ends_ms) < Date.now();
+        const ahead = Number(c.start_ms) > Date.now();
         return `
         <tr data-cup="${esc(c.id)}">
           <td><b>${esc(c.name)}</b>${pinPills(c, 'Champs')}<br><span class="muted">${esc(c.id)}</span>${teamRow(c.teams)}</td>
           <td>${esc(c.author || '—')}</td>
           <td class="num">${c.stages} <button class="ghost" data-a="stages" data-t="${esc(c.id)}">Show</button></td>
           <td><span class="pill ${c.status === 'approved' ? 'green' : c.status === 'pending' ? 'gold' : 'red'}">${esc(c.status)}</span>${c.rejection ? `<br><span class="muted">${esc(c.rejection)}</span>` : ''}</td>
-          <td><span class="pill ${c.hidden ? 'red' : over ? 'gold' : 'green'}">${c.hidden ? 'hidden' : over ? 'over' : 'showing'}</span></td>
+          <td>${c.status !== 'approved' ? '<span class="pill grey">off the feed</span>'
+                : `<span class="pill ${c.hidden ? 'red' : over ? 'gold' : 'green'}">${c.hidden ? 'hidden' : over ? 'over' : 'showing'}</span>`}</td>
           <td class="num">▲ ${c.ups ?? 0} ▼ ${c.downs ?? 0}</td>
           <td class="num">${c.reports}</td>
           <td class="muted">${when(c.created_at)}</td>
-          <td class="muted">${c.ends_ms ? when(new Date(Number(c.ends_ms)).toISOString()) : '—'}</td>
+          <td>${startCell(c)}</td>
+          <td class="muted">${c.approved_at && c.ends_ms ? when(new Date(Number(c.ends_ms)).toISOString()) : '—'}</td>
           <td class="act">
-            ${c.status !== 'approved' ? `<button data-a="approve" data-t="${esc(c.id)}">Approve</button>` : ''}
+            ${c.status === 'approved' ? ''
+              : c.approved_at && !ahead ? `<button data-a="restore" data-t="${esc(c.id)}">Approve</button>`
+              : `<button data-a="approve" data-t="${esc(c.id)}">Approve…</button>`}
+            ${c.status === 'approved' && ahead ? `<button data-a="reschedule" data-t="${esc(c.id)}">Change start</button>` : ''}
             ${c.status !== 'rejected' ? `<button class="danger" data-a="reject" data-t="${esc(c.id)}">Reject</button>` : ''}
             ${c.pinned ? `<button data-a="unpin" data-w="tab" data-t="${esc(c.id)}">Unpin from Champs</button>`
                        : `<button data-a="pin" data-w="tab" data-t="${esc(c.id)}">Pin on Champs</button>`}
@@ -385,13 +392,70 @@
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const t = b.dataset.t;
       if (b.dataset.a === 'stages') { toggleStages(t); return; }
-      if (b.dataset.a === 'approve') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup live');
+      if (b.dataset.a === 'approve') { toggleStart(t, 'approve'); return; }
+      if (b.dataset.a === 'reschedule') { toggleStart(t, 'move'); return; }
+      if (b.dataset.a === 'approve-now') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup approved — it starts now');
+      else if (b.dataset.a === 'approve-at') { const at = chosenStart(t); if (at !== null) act('review_cup', { p_cup: t, p_approve: true, p_reason: '', p_start_ms: at }, `Cup approved — it starts ${whenMs(at)}`); }
+      else if (b.dataset.a === 'move-at') { const at = chosenStart(t); if (at !== null) act('schedule_cup', { p_cup: t, p_start_ms: at }, `Start moved to ${whenMs(at)}`); }
+      else if (b.dataset.a === 'restore') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup back on the feed — its clock kept');
       else if (b.dataset.a === 'reject') { const why = reason(true); if (why !== null) act('review_cup', { p_cup: t, p_approve: false, p_reason: why }, 'Cup rejected'); }
       else if (b.dataset.a === 'pin') act('pin_cup', { p_cup: t, p_pinned: true, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Cup pinned');
       else if (b.dataset.a === 'unpin') act('pin_cup', { p_cup: t, p_pinned: false, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Cup unpinned');
       else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_cup', { p_cup: t, p_hidden: true, p_reason: why }, 'Cup hidden'); }
       else if (b.dataset.a === 'unhide') act('hide_cup', { p_cup: t, p_hidden: false, p_reason: 'shown' }, 'Cup showing');
     };
+  }
+
+  // THE START, SET HERE (2026-10-26). An author's cup waits off the feed;
+  // approving it says when it starts — now, or a day and time ahead, in this
+  // browser's own time, within 30 days — and it is on the feed from the
+  // approval, counting down, open to entries. Until it starts, Change start
+  // moves it; once it has started its clock is final. A cup that ran and came
+  // back for review keeps its clock when it is approved again.
+  const DAY_MS = 86400000;
+  const whenMs = (ms) => when(new Date(ms).toISOString());
+  const inWords = (ms) => {
+    const m = Math.max(0, Math.round(ms / 60000));
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    return h < 24 ? `${h}h ${String(m % 60).padStart(2, '0')}m` : `${Math.floor(h / 24)}d ${h % 24}h`;
+  };
+  function startCell(c) {
+    if (!c.approved_at) return '<span class="muted">set at approval</span>';
+    const left = Number(c.start_ms) - Date.now();
+    return `${whenMs(Number(c.start_ms))}<br><span class="pill ${left > 0 ? 'gold' : 'grey'}">${left > 0 ? 'in ' + inWords(left) : 'started'}</span>`;
+  }
+  // A datetime-local value for a moment, in this browser's time, to the minute.
+  const localValue = (ms) => { const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
+  function toggleStart(id, mode) {
+    const open = main.querySelector(`tr.startrow[data-for="${CSS.escape(id)}"]`);
+    if (open) { open.remove(); return; }
+    const tr = main.querySelector(`tr[data-cup="${CSS.escape(id)}"]`); if (!tr) return;
+    const cup = cupRows.find((c) => c.id === id); if (!cup) return;
+    const now = Date.now();
+    // The start it has when it has one ahead; else the next full hour.
+    const at = cup.approved_at && Number(cup.start_ms) > now ? Number(cup.start_ms) : Math.ceil((now + 1) / 3600000) * 3600000;
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "this browser's time";
+    const row = document.createElement('tr'); row.className = 'startrow'; row.dataset.for = id;
+    row.innerHTML = `<td colspan="11"><form onsubmit="return false">
+      <span class="muted">Starts</span>
+      <input type="datetime-local" name="at" step="900" value="${localValue(at)}" min="${localValue(now)}" max="${localValue(now + 30 * DAY_MS)}">
+      ${mode === 'approve'
+        ? `<button type="button" class="primary" data-a="approve-at" data-t="${esc(id)}">Approve, start then</button>
+           <button type="button" data-a="approve-now" data-t="${esc(id)}">Approve, start now</button>`
+        : `<button type="button" class="primary" data-a="move-at" data-t="${esc(id)}">Move the start</button>`}
+      <span class="muted">${esc(zone)} · within 30 days · ${mode === 'approve' ? 'on the feed from the approval' : 'the phones move their alerts'}, counting down</span>
+    </form></td>`;
+    tr.after(row);
+  }
+  // The start picked in a cup's fold, in ms — or null, said, when it is not one.
+  function chosenStart(id) {
+    const input = main.querySelector(`tr.startrow[data-for="${CSS.escape(id)}"] input[name="at"]`);
+    const ms = input && input.value ? new Date(input.value).getTime() : NaN;
+    if (!Number.isFinite(ms)) { toast('Pick a day and a time first.'); return null; }
+    if (ms <= Date.now()) { toast('That time has passed — pick one ahead, or start now.'); return null; }
+    if (ms > Date.now() + 30 * DAY_MS) { toast('A cup starts within 30 days.'); return null; }
+    return ms;
   }
 
   // THE STAGES OF A CUP, DRAWN. A reviewer could only see a stage COUNT and
@@ -405,7 +469,7 @@
     const cup = cupRows.find((c) => c.id === id); if (!cup) return;
     const stages = Array.isArray(cup.stage_list) ? cup.stage_list : [];
     const row = document.createElement('tr'); row.className = 'stagerow';
-    row.innerHTML = `<td colspan="10"><div class="stages">${stages.map((st, i) => `
+    row.innerHTML = `<td colspan="11"><div class="stages">${stages.map((st, i) => `
       <div class="stage" data-key="${esc(st.key || '')}">
         <canvas></canvas>
         <div><b>${i + 1}.</b> ${esc(st.name || st.key || '')}</div>
@@ -617,9 +681,11 @@
     return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map(teamBadge).join('')}</div>` : '';
   }
 
-  // When a cup's last stage ends: from ends_ms (the desk's rows) or from
-  // its schedule (the feed's rows).
+  // When a cup starts while that is still ahead (a start set at approval,
+  // 2026-10-26), else when its last stage ends: from ends_ms (the desk's
+  // rows) or from its schedule (the feed's rows).
   function cupEnds(c) {
+    if (Number(c.start_ms) > Date.now()) return `<span title="starts">starts ${whenMs(Number(c.start_ms))}</span>`;
     let ends = Number(c.ends_ms);
     if (!ends && Array.isArray(c.stages) && c.start_ms) {
       const n = c.stages.length;
