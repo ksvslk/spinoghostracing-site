@@ -1,0 +1,13 @@
+{
+  "name": "spinoghostracing-site",
+  "private": true,
+  "type": "module",
+  "description": "spinoghostracing.com: the static site, and the job that writes link previews for the game's tracks and championships (tools/og).",
+  "scripts": {
+    "og": "node tools/og/build.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "opentype.js": "1.3.4"
+  }
+}

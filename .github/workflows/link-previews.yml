@@ -1,0 +1,55 @@
+# LINK PREVIEWS for the game's track and championship links (tools/og/build.mjs).
+# Every ten minutes, and by hand: the game's public feed in, a page and a
+# picture for every published track and championship out (t/<id>/, c/<id>/),
+# and a commit when anything changed, which GitHub Pages then serves — asked
+# for outright, since a push made with the workflow's own token is not sure
+# to start the site's build. A run with nothing new commits nothing.
+name: Link previews
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: link-previews
+  cancel-in-progress: false
+
+jobs:
+  previews:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Write the previews
+        env:
+          SGR_SUPABASE_URL: https://cjktrgmnchyllpdebudj.supabase.co
+          SGR_SUPABASE_ANON_KEY: ${{ secrets.SGR_SUPABASE_ANON_KEY }}
+        run: node tools/og/build.mjs
+      - name: Commit what changed
+        id: commit
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing new"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Link previews: $(git diff --cached --name-only | grep -c 'index.html$') pages changed"
+          git push
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+      - name: Build the site now
+        if: steps.commit.outputs.pushed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" --silent
