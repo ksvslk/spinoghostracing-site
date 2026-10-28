@@ -1,0 +1,923 @@
+{
+	"borders": [
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#222222",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				}
+			],
+			"name": "none",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#222222",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				}
+			],
+			"name": "curb",
+			"run_off": 14.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#ff0000",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				}
+			],
+			"name": "curb_red",
+			"run_off": 14.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#0000ff",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				}
+			],
+			"name": "curb_blue",
+			"run_off": 14.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#ffd700",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#222222",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				}
+			],
+			"name": "curb_yellow",
+			"run_off": 14.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#222222",
+					"dash": [],
+					"round": true,
+					"width": 36.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#111111",
+					"dash": [
+						0.001,
+						48.0
+					],
+					"round": false,
+					"width": 18.0
+				}
+			],
+			"name": "tire_wall",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#666666",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#aaaaaa",
+					"dash": [],
+					"round": false,
+					"width": 22.0
+				}
+			],
+			"name": "barrier_concrete",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#8b5a2b",
+					"dash": [],
+					"round": false,
+					"width": 8.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#4a2e15",
+					"dash": [
+						16.0,
+						32.0
+					],
+					"round": false,
+					"width": 14.0
+				}
+			],
+			"name": "barrier_wood",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#aa3322",
+					"dash": [],
+					"round": false,
+					"width": 24.0
+				},
+				{
+					"alpha": 0.5,
+					"colour": "#661111",
+					"dash": [
+						10.0,
+						2.0
+					],
+					"round": false,
+					"width": 24.0
+				}
+			],
+			"name": "barrier_brick",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 0.6,
+					"colour": "#0044aa",
+					"dash": [],
+					"round": true,
+					"width": 32.0
+				},
+				{
+					"alpha": 0.8,
+					"colour": "#2288ff",
+					"dash": [
+						30.0,
+						40.0
+					],
+					"round": false,
+					"width": 12.0
+				}
+			],
+			"name": "barrier_water",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#a0e0ff",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [
+						60.0,
+						40.0
+					],
+					"round": false,
+					"width": 18.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#ddeeff",
+					"dash": [],
+					"round": false,
+					"width": 8.0
+				}
+			],
+			"name": "barrier_ice",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#998555",
+					"dash": [],
+					"round": false,
+					"width": 26.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#bba977",
+					"dash": [
+						24.0,
+						4.0
+					],
+					"round": false,
+					"width": 22.0
+				}
+			],
+			"name": "barrier_sandbags",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#777777",
+					"dash": [],
+					"round": false,
+					"width": 4.0
+				},
+				{
+					"alpha": 0.6,
+					"colour": "#999999",
+					"dash": [
+						4.0,
+						4.0
+					],
+					"round": false,
+					"width": 16.0
+				}
+			],
+			"name": "barrier_chainlink",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#888888",
+					"dash": [],
+					"round": false,
+					"width": 22.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#cccccc",
+					"dash": [],
+					"round": false,
+					"width": 12.0
+				}
+			],
+			"name": "armco_guardrail",
+			"run_off": 0.0
+		},
+		{
+			"layers": [
+				{
+					"alpha": 1.0,
+					"colour": "#cc2222",
+					"dash": [],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 1.0,
+					"colour": "#ffffff",
+					"dash": [
+						40.0,
+						40.0
+					],
+					"round": false,
+					"width": 28.0
+				},
+				{
+					"alpha": 0.8,
+					"colour": "#111111",
+					"dash": [
+						2.0,
+						78.0
+					],
+					"round": false,
+					"width": 16.0
+				}
+			],
+			"name": "techpro_barrier",
+			"run_off": 0.0
+		}
+	],
+	"default_ground": "grass_short",
+	"grounds": {
+		"canyon_floor": {
+			"colour": "#8b5242",
+			"far": "#8a5141",
+			"marks": "tiles/18_440x440.png",
+			"tile": [
+				440.0,
+				440.0
+			]
+		},
+		"city_blocks": {
+			"colour": "#323234",
+			"far": "#323234",
+			"marks": "tiles/25_400x400.png",
+			"tile": [
+				400.0,
+				400.0
+			]
+		},
+		"desert_sand": {
+			"colour": "#ccb47a",
+			"far": "#cbb37a",
+			"marks": "tiles/17_500x250.png",
+			"tile": [
+				500.0,
+				250.0
+			]
+		},
+		"farmland": {
+			"colour": "#665135",
+			"far": "#665135",
+			"marks": "tiles/15_400x400.png",
+			"tile": [
+				400.0,
+				400.0
+			]
+		},
+		"forest_floor": {
+			"colour": "#323d28",
+			"far": "#323d28",
+			"marks": "tiles/13_380x380.png",
+			"tile": [
+				380.0,
+				380.0
+			]
+		},
+		"grass_short": {
+			"colour": "#3d6c2e",
+			"far": "#3d6c2e",
+			"marks": "tiles/5_400x400.png",
+			"tile": [
+				400.0,
+				400.0
+			]
+		},
+		"gravel_pit": {
+			"colour": "#73716d",
+			"far": "#73716d",
+			"marks": "tiles/20_300x300.png",
+			"tile": [
+				300.0,
+				300.0
+			]
+		},
+		"jungle": {
+			"colour": "#1d4a28",
+			"far": "#1d4a28",
+			"marks": "tiles/14_460x460.png",
+			"tile": [
+				460.0,
+				460.0
+			]
+		},
+		"lava_field": {
+			"colour": "#211b1b",
+			"far": "#221b1b",
+			"marks": "tiles/21_460x460.png",
+			"tile": [
+				460.0,
+				460.0
+			]
+		},
+		"marsh": {
+			"colour": "#3c4a37",
+			"far": "#3c4a37",
+			"marks": "tiles/24_440x440.png",
+			"tile": [
+				440.0,
+				440.0
+			]
+		},
+		"meadow": {
+			"colour": "#538035",
+			"far": "#538035",
+			"marks": "tiles/9_360x360.png",
+			"tile": [
+				360.0,
+				360.0
+			]
+		},
+		"moorland": {
+			"colour": "#5a4f52",
+			"far": "#5b4f53",
+			"marks": "tiles/12_440x440.png",
+			"tile": [
+				440.0,
+				440.0
+			]
+		},
+		"old_town": {
+			"colour": "#5c564f",
+			"far": "#736e68",
+			"marks": "tiles/30_220x220.png",
+			"tile": [
+				220.0,
+				220.0
+			]
+		},
+		"parkland": {
+			"colour": "#437332",
+			"far": "#447333",
+			"marks": "tiles/10_480x240.png",
+			"tile": [
+				480.0,
+				240.0
+			]
+		},
+		"red_desert": {
+			"colour": "#a35c38",
+			"far": "#a35c38",
+			"marks": "tiles/17_460x230.png",
+			"tile": [
+				460.0,
+				230.0
+			]
+		},
+		"savanna": {
+			"colour": "#8b8447",
+			"far": "#8b8447",
+			"marks": "tiles/11_420x420.png",
+			"tile": [
+				420.0,
+				420.0
+			]
+		},
+		"snowfield": {
+			"colour": "#e0e7ef",
+			"far": "#e0e7ef",
+			"marks": "tiles/22_480x480.png",
+			"tile": [
+				480.0,
+				480.0
+			]
+		},
+		"suburb": {
+			"colour": "#4d703b",
+			"far": "#4e703c",
+			"marks": "tiles/10_420x210.png",
+			"tile": [
+				420.0,
+				210.0
+			]
+		},
+		"tundra": {
+			"colour": "#7a8271",
+			"far": "#7a8271",
+			"marks": "tiles/23_420x420.png",
+			"tile": [
+				420.0,
+				420.0
+			]
+		},
+		"volcanic_ash": {
+			"colour": "#524e4d",
+			"far": "#524e4d",
+			"marks": "tiles/20_340x340.png",
+			"tile": [
+				340.0,
+				340.0
+			]
+		}
+	},
+	"made_by": "godot/tools/export_og_looks.gd, from the game's own tables (og_looks.gd); check_og_looks keeps this copy current",
+	"shadow": {
+		"alpha": 0.45,
+		"direction": [
+			0.55,
+			0.84
+		],
+		"per_unit": 0.28
+	},
+	"surfaces": [
+		{
+			"colour": "#333333",
+			"far": "#333333",
+			"name": "asphalt_new"
+		},
+		{
+			"colour": "#444444",
+			"far": "#444444",
+			"name": "asphalt_old"
+		},
+		{
+			"colour": "#999999",
+			"far": "#999999",
+			"name": "concrete_smooth"
+		},
+		{
+			"colour": "#888888",
+			"far": "#888888",
+			"name": "concrete_rough"
+		},
+		{
+			"colour": "#686868",
+			"far": "#595959",
+			"name": "cobblestone"
+		},
+		{
+			"colour": "#aa4433",
+			"far": "#923a2c",
+			"name": "brick_red"
+		},
+		{
+			"colour": "#777777",
+			"far": "#666666",
+			"name": "brick_gray"
+		},
+		{
+			"colour": "#888888",
+			"far": "#878787",
+			"name": "gravel_gray"
+		},
+		{
+			"colour": "#7a6050",
+			"far": "#795f4f",
+			"name": "gravel_brown"
+		},
+		{
+			"colour": "#5c4033",
+			"far": "#5b4033",
+			"name": "dirt_dry"
+		},
+		{
+			"colour": "#4a3326",
+			"far": "#493326",
+			"name": "dirt_wet"
+		},
+		{
+			"colour": "#3d2b1f",
+			"far": "#3d2b1f",
+			"name": "mud_thick"
+		},
+		{
+			"colour": "#2a1e12",
+			"far": "#2a1e12",
+			"name": "mud_sludge"
+		},
+		{
+			"colour": "#9c4a30",
+			"far": "#9c4a30",
+			"name": "clay_red"
+		},
+		{
+			"colour": "#d2b48c",
+			"far": "#d1b38b",
+			"name": "sand_dry"
+		},
+		{
+			"colour": "#a8946e",
+			"far": "#a7936e",
+			"name": "sand_wet"
+		},
+		{
+			"colour": "#eacc9b",
+			"far": "#e9cb9a",
+			"name": "dunes"
+		},
+		{
+			"colour": "#ffffff",
+			"far": "#ffffff",
+			"name": "snow_packed"
+		},
+		{
+			"colour": "#eef4ff",
+			"far": "#eff4ff",
+			"name": "snow_deep"
+		},
+		{
+			"colour": "#a0e0ff",
+			"far": "#a3e1ff",
+			"name": "ice_smooth"
+		},
+		{
+			"colour": "#88d8ff",
+			"far": "#8bd9ff",
+			"name": "ice_cracked"
+		},
+		{
+			"colour": "#b0d0e0",
+			"far": "#afcfdf",
+			"name": "slush"
+		},
+		{
+			"colour": "#3d6c2e",
+			"far": "#3d6c2e",
+			"name": "grass_short"
+		},
+		{
+			"colour": "#2d4c1e",
+			"far": "#2d4c1e",
+			"name": "grass_tall"
+		},
+		{
+			"colour": "#4a6b2c",
+			"far": "#4a6a2c",
+			"name": "moss"
+		},
+		{
+			"colour": "#b05a22",
+			"far": "#af5922",
+			"name": "leaves_autumn"
+		},
+		{
+			"colour": "#8b5a2b",
+			"far": "#8b5a2b",
+			"name": "wood_oak"
+		},
+		{
+			"colour": "#c19a6b",
+			"far": "#c09a6b",
+			"name": "wood_pine"
+		},
+		{
+			"colour": "#4a2e15",
+			"far": "#4a2e15",
+			"name": "wood_dark"
+		},
+		{
+			"colour": "#c4d79b",
+			"far": "#c3d69b",
+			"name": "bamboo"
+		},
+		{
+			"colour": "#3a8ac7",
+			"far": "#418ec9",
+			"name": "water_shallow"
+		},
+		{
+			"colour": "#104b7d",
+			"far": "#104b7d",
+			"name": "water_deep"
+		},
+		{
+			"colour": "#556b6b",
+			"far": "#556b6b",
+			"name": "puddle"
+		},
+		{
+			"colour": "#60646b",
+			"far": "#60646b",
+			"name": "metal_grated"
+		},
+		{
+			"colour": "#888f99",
+			"far": "#888f99",
+			"name": "metal_smooth"
+		},
+		{
+			"colour": "#7a828e",
+			"far": "#7a828e",
+			"name": "diamond_plate"
+		},
+		{
+			"colour": "#b87333",
+			"far": "#b77333",
+			"name": "copper"
+		},
+		{
+			"colour": "#ffd700",
+			"far": "#fed600",
+			"name": "gold"
+		},
+		{
+			"colour": "#b22222",
+			"far": "#b12222",
+			"name": "tartan_red"
+		},
+		{
+			"colour": "#2222b2",
+			"far": "#2222b1",
+			"name": "tartan_blue"
+		},
+		{
+			"colour": "#1a1a1a",
+			"far": "#1a1a1a",
+			"name": "rubber_mat"
+		},
+		{
+			"colour": "#00aaff",
+			"far": "#00a9fe",
+			"name": "plastic_blue"
+		},
+		{
+			"colour": "#e0ffff",
+			"far": "#e1ffff",
+			"name": "glass_clear"
+		},
+		{
+			"colour": "#090a0f",
+			"far": "#090a0f",
+			"name": "neon_grid"
+		},
+		{
+			"colour": "#ff2200",
+			"far": "#ff2200",
+			"name": "lava_magma"
+		},
+		{
+			"colour": "#68200b",
+			"far": "#641f0b",
+			"name": "lava_cooling"
+		},
+		{
+			"colour": "#99ff00",
+			"far": "#99ff00",
+			"name": "acid_pool"
+		},
+		{
+			"colour": "#39ff14",
+			"far": "#39fd14",
+			"name": "slime_toxic"
+		},
+		{
+			"colour": "#ff00ff",
+			"far": "#fe00fe",
+			"name": "boost_pad"
+		},
+		{
+			"colour": "#32cd32",
+			"far": "#32cc32",
+			"name": "none"
+		},
+		{
+			"colour": "#aaaaaa",
+			"far": "#a9a9a9",
+			"name": "curb"
+		},
+		{
+			"colour": "#dd1111",
+			"far": "#dc1111",
+			"name": "curb_red"
+		},
+		{
+			"colour": "#1144dd",
+			"far": "#1144dc",
+			"name": "curb_blue"
+		},
+		{
+			"colour": "#ffcc00",
+			"far": "#fecb00",
+			"name": "curb_yellow"
+		},
+		{
+			"colour": "#222222",
+			"far": "#222222",
+			"name": "tire_wall"
+		},
+		{
+			"colour": "#999999",
+			"far": "#999999",
+			"name": "barrier_concrete"
+		},
+		{
+			"colour": "#8b5a2b",
+			"far": "#8b5a2b",
+			"name": "barrier_wood"
+		},
+		{
+			"colour": "#aa3322",
+			"far": "#922c1d",
+			"name": "barrier_brick"
+		},
+		{
+			"colour": "#0044aa",
+			"far": "#0a4bad",
+			"name": "barrier_water"
+		},
+		{
+			"colour": "#ccffff",
+			"far": "#ceffff",
+			"name": "barrier_ice"
+		},
+		{
+			"colour": "#aa9966",
+			"far": "#a99866",
+			"name": "barrier_sandbags"
+		},
+		{
+			"colour": "#888888",
+			"far": "#888888",
+			"name": "barrier_chainlink"
+		},
+		{
+			"colour": "#aaaaaa",
+			"far": "#a9a9a9",
+			"name": "armco_guardrail"
+		},
+		{
+			"colour": "#ff2222",
+			"far": "#fe2222",
+			"name": "techpro_barrier"
+		},
+		{
+			"colour": "#163820",
+			"far": "#163820",
+			"name": "bg_forest"
+		},
+		{
+			"colour": "#dcb881",
+			"far": "#dcb881",
+			"name": "bg_desert"
+		},
+		{
+			"colour": "#5dade2",
+			"far": "#5dade2",
+			"name": "bg_seaside"
+		},
+		{
+			"colour": "#e0f7fa",
+			"far": "#e0f7fa",
+			"name": "bg_tundra"
+		},
+		{
+			"colour": "#a04000",
+			"far": "#a04000",
+			"name": "bg_canyon"
+		},
+		{
+			"colour": "#2c3e50",
+			"far": "#2c3e50",
+			"name": "bg_volcanic"
+		},
+		{
+			"colour": "#1e3f20",
+			"far": "#1e3f20",
+			"name": "bg_swamp"
+		},
+		{
+			"colour": "#424756",
+			"far": "#424756",
+			"name": "bg_city"
+		},
+		{
+			"colour": "#275d2b",
+			"far": "#275d2b",
+			"name": "bg_pitch"
+		}
+	],
+	"walls": {
+		"shade_height": 160.0,
+		"shade_lift": 0.18
+	}
+}
