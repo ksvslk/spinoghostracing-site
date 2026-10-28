@@ -30,8 +30,10 @@ import opentype from "opentype.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SITE = path.resolve(HERE, "../..");
 const HOST = "https://spinoghostracing.com";
-// Bump to draw every picture again (a change of style).
-const RENDER_VERSION = "1";
+// Bump to draw every picture again (a change of style). 2: no "Free on
+// Android and iPhone" — the site's copy rules allow no platform or price
+// line (user, 2026-09-25; the game sells boards and colours).
+const RENDER_VERSION = "2";
 // World units per metre, as the game counts a track's length (hero_overlay.gd).
 const PER_METRE = 9.3;
 // The road's width in world units (level.gd DEFAULT_HALF_WIDTH, both sides).
@@ -257,7 +259,6 @@ function picture({ kind, name, facts, by, pts }) {
     svg += textPath(font.label, by, left, y, 28, "#eab308");
     y += 6;
   }
-  svg += textPath(font.small, "Free on Android and iPhone", left, 586, 24, "#8b8f9c");
   svg += "</svg>";
   return svg;
 }
@@ -362,7 +363,7 @@ function trackItem(row) {
   return {
     kind: "track", id, name, facts, by, pts,
     title: String(row.name || "Track"),
-    description: `${author ? `A track by ${row.author}` : "A track"} in Spino Ghost Racing. ${km > 0 ? `${km.toFixed(1)} km, ` : ""}${laps} lap${laps === 1 ? "" : "s"}. Race it free on Android and iPhone.`,
+    description: `${author ? `A track by ${row.author}` : "A track"} in Spino Ghost Racing. ${km > 0 ? `${km.toFixed(1)} km, ` : ""}${laps} lap${laps === 1 ? "" : "s"}.`,
     alt: `The ${String(row.name || "track")} circuit`,
     hash: hashOf({ kind: "track", name, facts, by, outline }),
   };
@@ -389,7 +390,7 @@ function cupItem(row, outlines) {
   return {
     kind: "cup", id, name, facts, by, pts,
     title: String(row.name || "Championship"),
-    description: `A championship${author ? ` by ${row.author_name}` : ""} in Spino Ghost Racing: ${stages.length} stage${stages.length === 1 ? "" : "s"}. Race it free on Android and iPhone.`,
+    description: `A championship${author ? ` by ${row.author_name}` : ""} in Spino Ghost Racing: ${stages.length} stage${stages.length === 1 ? "" : "s"}.`,
     alt: `The ${String(row.name || "championship")} championship`,
     hash: hashOf({ kind: "cup", name, facts, by, outline }),
   };
