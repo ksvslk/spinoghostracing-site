@@ -22,16 +22,19 @@
 // end — are removed, but a run that would remove more than half of them
 // stops instead: an empty or broken answer must not wipe the site.
 //
-// THE TRACK'S OWN LOOK (2026-10-29, user: "the images of deeplinks do not use
-// correct surface, a bit bg and wall type"). The picture was every track in
-// tarmac with red and white kerbs on one dark backdrop. It is now painted
-// from the track's level file the way the race paints it: the ground the
-// author chose with its tile of marks, each stretch of road in its own
-// material, each wall in its own recipe, bridges over what they cross with
-// their shadows. The colours and recipes come from looks.json, which the game
-// writes from its own tables (godot/tools/export_og_looks.gd; the game's
-// check_og_looks fails while this copy is stale). A change to the table
-// redraws every picture, as a RENDER_VERSION bump does.
+// THE TRACK'S OWN ROAD AND WALLS (2026-10-29, user: "the images of deeplinks
+// do not use correct surface, a bit bg and wall type"). The picture was every
+// track in tarmac with red and white kerbs. It is now painted from the
+// track's level file the way the race paints it: each stretch of road in its
+// own material, each wall in its own recipe, bridges over what they cross
+// with their shadows. The backdrop is one for every track — the first
+// picture's black, its glow in a neutral grey (user, after trying each
+// track's own ground behind it: "i wanted this to be same for everywhere",
+// then "not lets use the green glow" and "with glow"). The colours and
+// recipes come from looks.json, which the game writes from its own tables
+// (godot/tools/export_og_looks.gd; the game's check_og_looks fails while this
+// copy is stale). A change to the table redraws every picture, as a
+// RENDER_VERSION bump does.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -48,7 +51,8 @@ const HOST = "https://spinoghostracing.com";
 // Android and iPhone" — the site's copy rules allow no platform or price
 // line (user, 2026-09-25; the game sells boards and colours). 3: each
 // track's own ground, road and walls (a run downloads every level once).
-const RENDER_VERSION = "3";
+// 4: one backdrop for every track again, the circuit back in its own room.
+const RENDER_VERSION = "4";
 // World units per metre, as the game counts a track's length (hero_overlay.gd).
 const PER_METRE = 9.3;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -192,12 +196,12 @@ function parseLevel(text) {
   }
   if (!edges.length) throw new Error("the level has no road");
   const start = Math.min(edges[0].length - 1, Math.max(0, Math.trunc(Number(level.start_sample) || 0)));
-  return { ground: String(level.background || ""), edges, start };
+  return { edges, start };
 }
 
-// The feed's outline as a road in the game's defaults — asphalt, red and
-// white kerbs, short grass (level.gd DEFAULT_*) — for a track whose level
-// cannot be read: a plainer picture, never none.
+// The feed's outline as a road in the game's defaults — asphalt between red
+// and white kerbs (level.gd DEFAULT_*) — for a track whose level cannot be
+// read: a plainer picture, never none.
 function outlineLook(pts) {
   const n = pts.length;
   const edge = [];
@@ -216,7 +220,7 @@ function outlineLook(pts) {
       border: Math.max(0, LOOKS.borders.findIndex((x) => x.name === "curb_red")),
     });
   }
-  return { ground: LOOKS.default_ground, edges: [edge], start: 0 };
+  return { edges: [edge], start: 0 };
 }
 
 // ----------------------------------------------------------------- the words
@@ -270,17 +274,11 @@ const LOGO = (() => {
   return { viewBox, inner };
 })();
 
-// The game's look table: surfaces and borders by id, grounds by name — and
-// a hash of it and its tiles, which every page's hash carries.
+// The game's look table, surfaces and borders by id — and its hash, which
+// every page's hash carries.
 const LOOKS_TEXT = fs.readFileSync(path.join(HERE, "looks.json"), "utf8");
 const LOOKS = JSON.parse(LOOKS_TEXT);
-const LOOKS_HASH = (() => {
-  const h = crypto.createHash("sha256").update(LOOKS_TEXT);
-  for (const file of [...new Set(Object.values(LOOKS.grounds).map((g) => g.marks))].sort()) {
-    h.update(fs.readFileSync(path.join(HERE, file)));
-  }
-  return h.digest("hex");
-})();
+const LOOKS_HASH = crypto.createHash("sha256").update(LOOKS_TEXT).digest("hex");
 
 // What the Rust renderer keeps to itself (rust/gdext/src/lib.rs), as numbers.
 const SHADE_STEP = 24; // BORDER_SHADE_STEP: height per shade step, walls and road
@@ -300,15 +298,9 @@ const WALL_PX = 4;
 const WALL_SHARE = 0.4;
 const KERB_BAND = 28; // a kerb's band, twice its run-off (barriers.gd)
 // A tiny circuit is not blown up past this many pixels per world unit: a
-// loop a few car lengths round stays a loop on its ground, not a blot of
-// tarmac filling the picture.
+// loop a few car lengths round stays a loop, not a blot of tarmac filling
+// the picture.
 const MOST_SCALE = 0.35;
-
-const tileUris = new Map();
-function tileUri(file) {
-  if (!tileUris.has(file)) tileUris.set(file, `data:image/png;base64,${fs.readFileSync(path.join(HERE, file)).toString("base64")}`);
-  return tileUris.get(file);
-}
 
 function rgb(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -438,9 +430,7 @@ function outward(pts, by) {
 }
 
 // Where the circuit sits in `box`: the scale (pixels per world unit), the
-// walls' growth, and the world's origin on the picture. Centred up and
-// down; across, against the box's right side, so a tall circuit stands
-// clear of the words and a wide one fills the picture.
+// walls' growth, and the world's origin on the picture, centred.
 function framing(look, box) {
   let minX = Infinity;
   let minY = Infinity;
@@ -464,24 +454,16 @@ function framing(look, box) {
   const spanY = maxY - minY;
   const grow = (s) => Math.max(1, Math.min(WALL_PX, road * s * WALL_SHARE) / (KERB_BAND * s));
   let s = Math.min(box.w / Math.max(1, spanX + half * 2), box.h / Math.max(1, spanY + half * 2), MOST_SCALE);
-  let pad = half;
   for (let i = 0; i < 3; i++) {
     // Room for the widest wall (a tyre wall, 36) grown, and a shadow.
-    pad = half + 40 * grow(s) + 4 / s;
+    const pad = half + 40 * grow(s) + 4 / s;
     s = Math.min(box.w / Math.max(1, spanX + pad * 2), box.h / Math.max(1, spanY + pad * 2), MOST_SCALE);
   }
-  const ox = box.x + box.w - (spanX + pad) * s - minX * s;
-  const oy = box.y + (box.h - spanY * s) / 2 - minY * s;
   return {
     s,
     grow: grow(s),
-    ox,
-    oy,
-    // The drawn circuit's middle and size, in pixels: where its glow sits.
-    cx: ox + ((minX + maxX) / 2) * s,
-    cy: oy + ((minY + maxY) / 2) * s,
-    w: (spanX + pad * 2) * s,
-    h: (spanY + pad * 2) * s,
+    ox: box.x + (box.w - spanX * s) / 2 - minX * s,
+    oy: box.y + (box.h - spanY * s) / 2 - minY * s,
   };
 }
 
@@ -648,7 +630,7 @@ function circuit(look, frame) {
   for (let layer = 0; layer <= top; layer++) {
     if (shadows.has(layer)) svg += `<path d="${shadows.get(layer)}" fill="#000" fill-opacity="${LOOKS.shadow.alpha.toFixed(2)}"/>`;
     // Each stretch's quads in one path, edged in their own colour: two
-    // paths meeting edge to edge leave a hairline of ground between them
+    // paths meeting edge to edge leave a hairline of backdrop between them
     // where the race's mesh has none.
     for (const [colour, d] of roads.get(layer) || []) {
       svg += `<path d="${d}" fill="${colour}" stroke="${colour}" stroke-width="0.6" stroke-linejoin="round"/>`;
@@ -659,83 +641,34 @@ function circuit(look, frame) {
   return svg;
 }
 
-// THE FIRST PICTURE'S BACKDROP: a dark diagonal and a soft glow where the
-// circuit is. The glow is the track's own ground — its colour taken this far
-// toward the dark, its marks laid in the glow's middle.
-const DARK = "#0f1015";
-const GLOW_DARK = 0.45;
-
-function mixHex(a, b, t) {
-  const x = rgb(a);
-  const y = rgb(b);
-  return "#" + x.map((c, i) => Math.round(c + (y[i] - c) * t).toString(16).padStart(2, "0")).join("");
-}
-
 function picture({ kind, name, facts, by, look }) {
   const left = 64;
   const textW = 470;
-  // THE WHOLE PICTURE IS THE TRACK, ON THE FIRST PICTURE'S BLACK (2026-10-29,
-  // user: "overlay the track completely to the whole image ... the track can
-  // even then be behind the text", then "we need some more blackish gradient
-  // style the first variant you did had"). The circuit is as big as the
-  // picture allows, in its own materials, over the first picture's dark
-  // diagonal; its ground is the glow behind it; the words stand over it all
-  // on a soft shadow of their own.
-  const art = { x: 36, y: 36, w: W - 72, h: H - 72 };
-  const ground = look ? LOOKS.grounds[look.ground] || LOOKS.grounds[LOOKS.default_ground] : null;
-  const frame = look ? framing(look, art) : null;
-  // A BROAD GLOW, not a spot (user: "not focused in 1 point rather big
-  // radius"): wider than the picture, flat through its middle.
-  const glow = ground
-    ? { cx: frame.cx, cy: frame.cy, rx: Math.max(760, frame.w * 0.8 + 260), ry: Math.max(560, frame.h * 0.8 + 220), colour: mixHex(ground.colour, DARK, GLOW_DARK) }
-    : { cx: 880, cy: 315, rx: 760, ry: 560, colour: "#2b3a2e" };
+  // THE FIRST PICTURE'S LOOK (user: "direction", over a photo of it; "i
+  // wanted this to be same for everywhere"): one backdrop for every track —
+  // a dark diagonal and a soft glow, grey rather than the first one's green
+  // ("not lets use the green glow", "with glow") — and the circuit in its
+  // own room on the right, clear of the words. Only the circuit is the
+  // track's own.
+  const art = { x: 580, y: 36, w: 580, h: 558 };
   let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0f1015"/><stop offset="1" stop-color="#171b24"/>
     </linearGradient>
     <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="${glow.colour}" stop-opacity="0.7"/><stop offset="0.35" stop-color="${glow.colour}" stop-opacity="0.6"/><stop offset="0.7" stop-color="${glow.colour}" stop-opacity="0.25"/><stop offset="1" stop-color="${glow.colour}" stop-opacity="0"/>
+      <stop offset="0" stop-color="#2a2d36" stop-opacity="0.9"/><stop offset="1" stop-color="#2a2d36" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="fade" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.8"/><stop offset="0.35" stop-color="#fff" stop-opacity="0.65"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="words" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="${DARK}" stop-opacity="0.8"/><stop offset="0.36" stop-color="${DARK}" stop-opacity="0.76"/><stop offset="0.44" stop-color="${DARK}" stop-opacity="0.6"/><stop offset="0.52" stop-color="${DARK}" stop-opacity="0.32"/><stop offset="0.6" stop-color="${DARK}" stop-opacity="0.11"/><stop offset="0.68" stop-color="${DARK}" stop-opacity="0"/>
-    </linearGradient>
-    <mask id="near" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}">
-      <ellipse cx="${f1(glow.cx)}" cy="${f1(glow.cy)}" rx="${f1(glow.rx)}" ry="${f1(glow.ry)}" fill="url(#fade)"/>
-    </mask>
     <filter id="soft" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="5"/></filter>
-    <filter id="lift" x="-10%" y="-40%" width="120%" height="180%" color-interpolation-filters="sRGB">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="7"/>
-      <feComponentTransfer><feFuncA type="linear" slope="0.7"/></feComponentTransfer>
-      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>`;
-  if (ground) {
-    // The ground's marks pinned to the world, as background.gd pins them.
-    const tw = ground.tile[0] * frame.s;
-    const th = ground.tile[1] * frame.s;
-    svg += `
-    <pattern id="marks" patternUnits="userSpaceOnUse" x="${f1(frame.ox)}" y="${f1(frame.oy)}" width="${tw.toFixed(3)}" height="${th.toFixed(3)}">
-      <image href="${tileUri(ground.marks)}" width="${tw.toFixed(3)}" height="${th.toFixed(3)}" preserveAspectRatio="none"/>
-    </pattern>`;
-  }
-  svg += `
   </defs>
   <rect width="${W}" height="${H}" fill="url(#bg)"/>
-  <ellipse cx="${f1(glow.cx)}" cy="${f1(glow.cy)}" rx="${f1(glow.rx)}" ry="${f1(glow.ry)}" fill="url(#glow)"/>`;
-  if (ground) {
-    svg += `<rect width="${W}" height="${H}" fill="url(#marks)" mask="url(#near)"/>`;
-    svg += circuit(look, frame);
-    // THE CIRCUIT DARKER WHERE THE WORDS ARE (user: "more darker ON track
-    // when text starts"), easing out across the middle of the picture.
-    svg += `<rect width="${W}" height="${H}" fill="url(#words)"/>`;
+  <ellipse cx="880" cy="315" rx="340" ry="300" fill="url(#glow)"/>`;
+  // The circuit, or the house's dino where a cup has no published stage.
+  if (look) {
+    svg += circuit(look, framing(look, art));
   } else {
-    // A championship with no published stage: the house's dino.
-    svg += `<svg x="660" y="140" width="460" height="350" viewBox="${LOGO.viewBox}">${LOGO.inner}</svg>`;
+    svg += `<svg x="${art.x + 40}" y="${art.y + 110}" width="${art.w - 80}" height="${art.h - 220}" viewBox="${LOGO.viewBox}">${LOGO.inner}</svg>`;
   }
-  svg += `<g filter="url(#lift)">`;
   // The wordmark, top left: the dino and SPINO GHOST RACING.
   svg += `<svg x="${left}" y="48" width="74" height="50" viewBox="${LOGO.viewBox}">${LOGO.inner}</svg>`;
   svg += textPath(font.name, "SPINO GHOST", left + 86, 88, 38, "#f4f4f5");
@@ -774,7 +707,7 @@ function picture({ kind, name, facts, by, look }) {
     svg += textPath(font.label, by, left, y, fit(font.label, by, 28), "#eab308");
     y += 6;
   }
-  svg += "</g></svg>";
+  svg += "</svg>";
   return svg;
 }
 
