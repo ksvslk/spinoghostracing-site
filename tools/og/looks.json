@@ -357,6 +357,1202 @@
 			"run_off": 0.0
 		}
 	],
+	"link": {
+		"cases": [
+			[
+				"Ace this Spade",
+				"track",
+				"ace-this-spade"
+			],
+			[
+				"Nürburgring 24H",
+				"track",
+				"nurburgring-24h"
+			],
+			[
+				"Roller Coaster 🎢",
+				"track",
+				"roller-coaster"
+			],
+			[
+				"⚠ Under Construction ⚠️",
+				"track",
+				"under-construction"
+			],
+			[
+				"\"Love it. Again!\"",
+				"track",
+				"love-it-again"
+			],
+			[
+				"Game's Signature",
+				"track",
+				"games-signature"
+			],
+			[
+				"Dirty Nelly’s",
+				"track",
+				"dirty-nellys"
+			],
+			[
+				"Ça Va Vite",
+				"track",
+				"ca-va-vite"
+			],
+			[
+				"Straße der Sieger",
+				"track",
+				"strasse-der-sieger"
+			],
+			[
+				"Øresund Ring",
+				"track",
+				"oresund-ring"
+			],
+			[
+				"Łódź Loop",
+				"track",
+				"lodz-loop"
+			],
+			[
+				"",
+				"track",
+				"track"
+			],
+			[
+				"!!!",
+				"track",
+				"track"
+			],
+			[
+				"A--B",
+				"track",
+				"a-b"
+			],
+			[
+				"  spaced  out  ",
+				"track",
+				"spaced-out"
+			],
+			[
+				"Track 2",
+				"track",
+				"track-2"
+			],
+			[
+				"R&D Test",
+				"track",
+				"r-d-test"
+			],
+			[
+				"ÆØÅ",
+				"track",
+				"aeoa"
+			],
+			[
+				"Œuvre",
+				"track",
+				"oeuvre"
+			],
+			[
+				"Ĳsselmeer",
+				"track",
+				"ijsselmeer"
+			],
+			[
+				"İstanbul Park",
+				"track",
+				"istanbul-park"
+			],
+			[
+				"日本サーキット",
+				"track",
+				"track"
+			],
+			[
+				"tracks of my country #1",
+				"track",
+				"tracks-of-my-country-1"
+			],
+			[
+				"A very long name that runs well past the forty character cap",
+				"track",
+				"a-very-long-name-that-runs-well-past-the"
+			],
+			[
+				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx yz",
+				"track",
+				"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+			],
+			[
+				"🏁🏁",
+				"championship",
+				"championship"
+			],
+			[
+				"xày à",
+				"track",
+				"xay-a"
+			],
+			[
+				"xáy á",
+				"track",
+				"xay-a"
+			],
+			[
+				"xây â",
+				"track",
+				"xay-a"
+			],
+			[
+				"xãy ã",
+				"track",
+				"xay-a"
+			],
+			[
+				"xäy ä",
+				"track",
+				"xay-a"
+			],
+			[
+				"xåy å",
+				"track",
+				"xay-a"
+			],
+			[
+				"xāy ā",
+				"track",
+				"xay-a"
+			],
+			[
+				"xăy ă",
+				"track",
+				"xay-a"
+			],
+			[
+				"xąy ą",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÀy À",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÁy Á",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÂy Â",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÃy Ã",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÄy Ä",
+				"track",
+				"xay-a"
+			],
+			[
+				"xÅy Å",
+				"track",
+				"xay-a"
+			],
+			[
+				"xĀy Ā",
+				"track",
+				"xay-a"
+			],
+			[
+				"xĂy Ă",
+				"track",
+				"xay-a"
+			],
+			[
+				"xĄy Ą",
+				"track",
+				"xay-a"
+			],
+			[
+				"xæy æ",
+				"track",
+				"xaey-ae"
+			],
+			[
+				"xÆy Æ",
+				"track",
+				"xaey-ae"
+			],
+			[
+				"xçy ç",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xćy ć",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xĉy ĉ",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xċy ċ",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xčy č",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xÇy Ç",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xĆy Ć",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xĈy Ĉ",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xĊy Ċ",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xČy Č",
+				"track",
+				"xcy-c"
+			],
+			[
+				"xďy ď",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xđy đ",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xðy ð",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xĎy Ď",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xĐy Đ",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xÐy Ð",
+				"track",
+				"xdy-d"
+			],
+			[
+				"xèy è",
+				"track",
+				"xey-e"
+			],
+			[
+				"xéy é",
+				"track",
+				"xey-e"
+			],
+			[
+				"xêy ê",
+				"track",
+				"xey-e"
+			],
+			[
+				"xëy ë",
+				"track",
+				"xey-e"
+			],
+			[
+				"xēy ē",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĕy ĕ",
+				"track",
+				"xey-e"
+			],
+			[
+				"xėy ė",
+				"track",
+				"xey-e"
+			],
+			[
+				"xęy ę",
+				"track",
+				"xey-e"
+			],
+			[
+				"xěy ě",
+				"track",
+				"xey-e"
+			],
+			[
+				"xÈy È",
+				"track",
+				"xey-e"
+			],
+			[
+				"xÉy É",
+				"track",
+				"xey-e"
+			],
+			[
+				"xÊy Ê",
+				"track",
+				"xey-e"
+			],
+			[
+				"xËy Ë",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĒy Ē",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĔy Ĕ",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĖy Ė",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĘy Ę",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĚy Ě",
+				"track",
+				"xey-e"
+			],
+			[
+				"xĝy ĝ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xğy ğ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xġy ġ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xģy ģ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xĜy Ĝ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xĞy Ğ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xĠy Ġ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xĢy Ģ",
+				"track",
+				"xgy-g"
+			],
+			[
+				"xĥy ĥ",
+				"track",
+				"xhy-h"
+			],
+			[
+				"xħy ħ",
+				"track",
+				"xhy-h"
+			],
+			[
+				"xĤy Ĥ",
+				"track",
+				"xhy-h"
+			],
+			[
+				"xĦy Ħ",
+				"track",
+				"xhy-h"
+			],
+			[
+				"xìy ì",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xíy í",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xîy î",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xïy ï",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĩy ĩ",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xīy ī",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĭy ĭ",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xįy į",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xıy ı",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xÌy Ì",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xÍy Í",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xÎy Î",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xÏy Ï",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĨy Ĩ",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĪy Ī",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĬy Ĭ",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĮy Į",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xİy İ",
+				"track",
+				"xiy-i"
+			],
+			[
+				"xĳy ĳ",
+				"track",
+				"xijy-ij"
+			],
+			[
+				"xĲy Ĳ",
+				"track",
+				"xijy-ij"
+			],
+			[
+				"xĵy ĵ",
+				"track",
+				"xjy-j"
+			],
+			[
+				"xĴy Ĵ",
+				"track",
+				"xjy-j"
+			],
+			[
+				"xķy ķ",
+				"track",
+				"xky-k"
+			],
+			[
+				"xĶy Ķ",
+				"track",
+				"xky-k"
+			],
+			[
+				"xĺy ĺ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xļy ļ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xľy ľ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xŀy ŀ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xły ł",
+				"track",
+				"xly-l"
+			],
+			[
+				"xĹy Ĺ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xĻy Ļ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xĽy Ľ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xĿy Ŀ",
+				"track",
+				"xly-l"
+			],
+			[
+				"xŁy Ł",
+				"track",
+				"xly-l"
+			],
+			[
+				"xñy ñ",
+				"track",
+				"xny-n"
+			],
+			[
+				"xńy ń",
+				"track",
+				"xny-n"
+			],
+			[
+				"xņy ņ",
+				"track",
+				"xny-n"
+			],
+			[
+				"xňy ň",
+				"track",
+				"xny-n"
+			],
+			[
+				"xŉy ŉ",
+				"track",
+				"xny-n"
+			],
+			[
+				"xÑy Ñ",
+				"track",
+				"xny-n"
+			],
+			[
+				"xŃy Ń",
+				"track",
+				"xny-n"
+			],
+			[
+				"xŅy Ņ",
+				"track",
+				"xny-n"
+			],
+			[
+				"xŇy Ň",
+				"track",
+				"xny-n"
+			],
+			[
+				"xòy ò",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xóy ó",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xôy ô",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xõy õ",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xöy ö",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xøy ø",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xōy ō",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xŏy ŏ",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xőy ő",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xÒy Ò",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xÓy Ó",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xÔy Ô",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xÕy Õ",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xÖy Ö",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xØy Ø",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xŌy Ō",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xŎy Ŏ",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xŐy Ő",
+				"track",
+				"xoy-o"
+			],
+			[
+				"xœy œ",
+				"track",
+				"xoey-oe"
+			],
+			[
+				"xŒy Œ",
+				"track",
+				"xoey-oe"
+			],
+			[
+				"xŕy ŕ",
+				"track",
+				"xry-r"
+			],
+			[
+				"xŗy ŗ",
+				"track",
+				"xry-r"
+			],
+			[
+				"xřy ř",
+				"track",
+				"xry-r"
+			],
+			[
+				"xŔy Ŕ",
+				"track",
+				"xry-r"
+			],
+			[
+				"xŖy Ŗ",
+				"track",
+				"xry-r"
+			],
+			[
+				"xŘy Ř",
+				"track",
+				"xry-r"
+			],
+			[
+				"xśy ś",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xŝy ŝ",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xşy ş",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xšy š",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xŚy Ś",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xŜy Ŝ",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xŞy Ş",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xŠy Š",
+				"track",
+				"xsy-s"
+			],
+			[
+				"xßy ß",
+				"track",
+				"xssy-ss"
+			],
+			[
+				"xẞy ẞ",
+				"track",
+				"xssy-ss"
+			],
+			[
+				"xţy ţ",
+				"track",
+				"xty-t"
+			],
+			[
+				"xťy ť",
+				"track",
+				"xty-t"
+			],
+			[
+				"xŧy ŧ",
+				"track",
+				"xty-t"
+			],
+			[
+				"xŢy Ţ",
+				"track",
+				"xty-t"
+			],
+			[
+				"xŤy Ť",
+				"track",
+				"xty-t"
+			],
+			[
+				"xŦy Ŧ",
+				"track",
+				"xty-t"
+			],
+			[
+				"xþy þ",
+				"track",
+				"xthy-th"
+			],
+			[
+				"xÞy Þ",
+				"track",
+				"xthy-th"
+			],
+			[
+				"xùy ù",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xúy ú",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xûy û",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xüy ü",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xũy ũ",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xūy ū",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŭy ŭ",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xůy ů",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xűy ű",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xųy ų",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xÙy Ù",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xÚy Ú",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xÛy Û",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xÜy Ü",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŨy Ũ",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŪy Ū",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŬy Ŭ",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŮy Ů",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŰy Ű",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŲy Ų",
+				"track",
+				"xuy-u"
+			],
+			[
+				"xŵy ŵ",
+				"track",
+				"xwy-w"
+			],
+			[
+				"xŴy Ŵ",
+				"track",
+				"xwy-w"
+			],
+			[
+				"xýy ý",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xÿy ÿ",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xŷy ŷ",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xÝy Ý",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xŸy Ÿ",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xŶy Ŷ",
+				"track",
+				"xyy-y"
+			],
+			[
+				"xźy ź",
+				"track",
+				"xzy-z"
+			],
+			[
+				"xży ż",
+				"track",
+				"xzy-z"
+			],
+			[
+				"xžy ž",
+				"track",
+				"xzy-z"
+			],
+			[
+				"xŹy Ź",
+				"track",
+				"xzy-z"
+			],
+			[
+				"xŻy Ż",
+				"track",
+				"xzy-z"
+			],
+			[
+				"xŽy Ž",
+				"track",
+				"xzy-z"
+			],
+			[
+				"it's",
+				"track",
+				"its"
+			],
+			[
+				"it’s",
+				"track",
+				"its"
+			],
+			[
+				"it‘s",
+				"track",
+				"its"
+			],
+			[
+				"itʼs",
+				"track",
+				"its"
+			],
+			[
+				"it`s",
+				"track",
+				"its"
+			]
+		],
+		"host": "spinoghostracing.com",
+		"id_chars": 8,
+		"slug_drop": "'’‘ʼ`",
+		"slug_groups": [
+			[
+				"àáâãäåāăąÀÁÂÃÄÅĀĂĄ",
+				"a"
+			],
+			[
+				"æÆ",
+				"ae"
+			],
+			[
+				"çćĉċčÇĆĈĊČ",
+				"c"
+			],
+			[
+				"ďđðĎĐÐ",
+				"d"
+			],
+			[
+				"èéêëēĕėęěÈÉÊËĒĔĖĘĚ",
+				"e"
+			],
+			[
+				"ĝğġģĜĞĠĢ",
+				"g"
+			],
+			[
+				"ĥħĤĦ",
+				"h"
+			],
+			[
+				"ìíîïĩīĭįıÌÍÎÏĨĪĬĮİ",
+				"i"
+			],
+			[
+				"ĳĲ",
+				"ij"
+			],
+			[
+				"ĵĴ",
+				"j"
+			],
+			[
+				"ķĶ",
+				"k"
+			],
+			[
+				"ĺļľŀłĹĻĽĿŁ",
+				"l"
+			],
+			[
+				"ñńņňŉÑŃŅŇ",
+				"n"
+			],
+			[
+				"òóôõöøōŏőÒÓÔÕÖØŌŎŐ",
+				"o"
+			],
+			[
+				"œŒ",
+				"oe"
+			],
+			[
+				"ŕŗřŔŖŘ",
+				"r"
+			],
+			[
+				"śŝşšŚŜŞŠ",
+				"s"
+			],
+			[
+				"ßẞ",
+				"ss"
+			],
+			[
+				"ţťŧŢŤŦ",
+				"t"
+			],
+			[
+				"þÞ",
+				"th"
+			],
+			[
+				"ùúûüũūŭůűųÙÚÛÜŨŪŬŮŰŲ",
+				"u"
+			],
+			[
+				"ŵŴ",
+				"w"
+			],
+			[
+				"ýÿŷÝŸŶ",
+				"y"
+			],
+			[
+				"źżžŹŻŽ",
+				"z"
+			]
+		],
+		"slug_most": 40
+	},
 	"made_by": "godot/tools/export_og_looks.gd, from the game's own tables (og_looks.gd); check_og_looks keeps this copy current",
 	"shadow": {
 		"alpha": 0.45,

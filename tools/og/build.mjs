@@ -1,12 +1,22 @@
 // LINK PREVIEWS FOR THE GAME'S LINKS (2026-10-28).
 //
 // A track or a championship shared from the game (the header's share button)
-// is https://spinoghostracing.com/t/<uuid> or /c/<uuid>. Those addresses fell
+// is https://spinoghostracing.com/t/<name>-<id's first 8> or /c/<…> (the first
+// test builds shared /t/<uuid>, /c/<uuid>). Those addresses fell
 // to 404.html, which answers with HTTP 404 and no preview tags, so X, Discord
 // and the rest showed a bare line of text. This writes, for every published
 // track and every championship on the feed, a page at that address with the
 // preview tags and a 1200 x 630 picture of the circuit as the race draws it:
-// t/<uuid>/index.html + og.png, c/<uuid>/index.html + og.png.
+// t/<slug>/index.html + og.png, c/<slug>/index.html + og.png, and at the
+// whole id the same page without its picture (t/<uuid>/index.html), which
+// shows the slug page's.
+//
+// SLUG ADDRESSES (2026-10-29, user: "any way to make the links more slug
+// like?"). The game makes a link's words from the name (godot/links.gd);
+// this makes them the same way, from the table looks.json carries, and every
+// run first checks itself against the cases the game slugged there — a link
+// shared must find its page. The id's first eight characters end the slug;
+// the game opens the track by those, and the name is only for people.
 //
 //   node tools/og/build.mjs                    live: the game's own public feed
 //   node tools/og/build.mjs --fixture f.json --levels dir --out /tmp/x
@@ -279,6 +289,49 @@ const LOGO = (() => {
 const LOOKS_TEXT = fs.readFileSync(path.join(HERE, "looks.json"), "utf8");
 const LOOKS = JSON.parse(LOOKS_TEXT);
 const LOOKS_HASH = crypto.createHash("sha256").update(LOOKS_TEXT).digest("hex");
+
+// THE LINKS' WORDS, as the game makes them (godot/links.gd slug).
+const SLUG_LETTERS = new Map();
+for (const [chars, to] of LOOKS.link.slug_groups) {
+  for (const c of chars) SLUG_LETTERS.set(c, to);
+}
+
+function slugOf(name, fallback) {
+  let out = "";
+  let gap = false;
+  for (const c of String(name ?? "")) {
+    const code = c.codePointAt(0);
+    let add = "";
+    if (code >= 65 && code <= 90) add = String.fromCharCode(code + 32);
+    else if ((code >= 97 && code <= 122) || (code >= 48 && code <= 57)) add = c;
+    else if (LOOKS.link.slug_drop.includes(c)) continue;
+    else add = SLUG_LETTERS.get(c) || "";
+    if (!add) {
+      gap = true;
+      continue;
+    }
+    if (gap && out) out += "-";
+    gap = false;
+    out += add;
+  }
+  if (out.length > LOOKS.link.slug_most) out = out.slice(0, LOOKS.link.slug_most).replace(/-+$/, "");
+  return out || fallback;
+}
+
+// A page's address under t/ or c/: the name's words and the id's first
+// characters, as the game shares it (godot/links.gd track, cup).
+function slugPath(name, fallback, id) {
+  return `${slugOf(name, fallback)}-${id.slice(0, LOOKS.link.id_chars)}`;
+}
+
+// Every case the game slugged, slugged here the same: else stop, loudly —
+// links would be shared to pages written elsewhere.
+function checkSlugs() {
+  for (const [name, fallback, want] of LOOKS.link.cases) {
+    const got = slugOf(name, fallback);
+    if (got !== want) throw new Error(`"${name}" makes the link words "${got}" here and "${want}" in the game`);
+  }
+}
 
 // What the Rust renderer keeps to itself (rust/gdext/src/lib.rs), as numbers.
 const SHADE_STEP = 24; // BORDER_SHADE_STEP: height per shade step, walls and road
@@ -717,9 +770,12 @@ function png(svg) {
 
 // ------------------------------------------------------------------ the page
 
-function page({ kind, id, title, description, alt, hash }) {
+// The page at the slug address, and the same page at the whole id for links
+// shared before slugs: both name the slug address as theirs and show its
+// picture.
+function page({ kind, id, slug, title, description, alt, hash }) {
   const dir = kind === "cup" ? "c" : "t";
-  const url = `${HOST}/${dir}/${id}`;
+  const url = `${HOST}/${dir}/${slug}`;
   const image = `${url}/og.png?v=${hash.slice(0, 10)}`;
   const what = kind === "cup" ? "A championship in Spino Ghost Racing" : "A track in Spino Ghost Racing";
   const t = escapeHtml(title);
@@ -762,7 +818,7 @@ function page({ kind, id, title, description, alt, hash }) {
 </style><link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" type="image/png" sizes="96x96" href="/assets/favicon-96.png"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
 </head>
 <body><main>
-  <img class="art" src="og.png?v=${hash.slice(0, 10)}" width="${W}" height="${H}" alt="${escapeHtml(alt)}">
+  <img class="art" src="/${dir}/${slug}/og.png?v=${hash.slice(0, 10)}" width="${W}" height="${H}" alt="${escapeHtml(alt)}">
   <h1>${t}</h1>
   <p>${d}</p>
   <a class="open" href="spinoghostracing://${dir}/${id}">OPEN IN THE GAME</a>
@@ -808,12 +864,13 @@ function trackItem(row) {
   const facts = [km > 0 ? `${km.toFixed(1)} km` : "", plural(laps, "LAP")].filter(Boolean).join("   ·   ");
   const by = author ? `BY ${author.toUpperCase()}` : "";
   const outline = pts.map((p) => [Math.round(p[0] * 2) / 2, Math.round(p[1] * 2) / 2]);
+  const slug = slugPath(row.name, "track", id);
   return {
-    kind: "track", id, name, facts, by, pts, lookKey: `pub:${id}`,
+    kind: "track", id, slug, name, facts, by, pts, lookKey: `pub:${id}`,
     title: String(row.name || "Track"),
     description: `${author ? `A track by ${row.author}` : "A track"} in Spino Ghost Racing. ${km > 0 ? `${km.toFixed(1)} km, ` : ""}${laps} lap${laps === 1 ? "" : "s"}.`,
     alt: `The ${String(row.name || "track")} circuit`,
-    hash: hashOf({ kind: "track", name, facts, by, outline, lookKey: `pub:${id}` }),
+    hash: hashOf({ kind: "track", name, facts, by, outline, lookKey: `pub:${id}`, slug }),
   };
 }
 
@@ -838,12 +895,13 @@ function cupItem(row, outlines) {
   const facts = [plural(stages.length, "STAGE"), entrants > 0 ? plural(entrants, "RACER") : ""].filter(Boolean).join("   ·   ");
   const by = author ? `BY ${author.toUpperCase()}` : "";
   const outline = pts.map((p) => [Math.round(p[0] * 2) / 2, Math.round(p[1] * 2) / 2]);
+  const slug = slugPath(row.name, "championship", id);
   return {
-    kind: "cup", id, name, facts, by, pts, lookKey,
+    kind: "cup", id, slug, name, facts, by, pts, lookKey,
     title: String(row.name || "Championship"),
     description: `A championship${author ? ` by ${row.author_name}` : ""} in Spino Ghost Racing: ${stages.length} stage${stages.length === 1 ? "" : "s"}.`,
     alt: `The ${String(row.name || "championship")} championship`,
-    hash: hashOf({ kind: "cup", name, facts, by, outline, lookKey }),
+    hash: hashOf({ kind: "cup", name, facts, by, outline, lookKey, slug }),
   };
 }
 
@@ -854,18 +912,38 @@ function lookOf(key) {
   return looks.get(key);
 }
 
+// The pages this job made under t/ or c/, at either address: the ones whose
+// page carries its hash.
 function managed(dir) {
   const root = path.join(OUT, dir);
   if (!fs.existsSync(root)) return [];
-  return fs.readdirSync(root).filter((n) => UUID.test(n) && fs.existsSync(path.join(root, n, "index.html")));
+  return fs.readdirSync(root).filter((n) => existingHash(path.join(root, n, "index.html")) !== "");
 }
 
 async function main() {
+  checkSlugs();
   const data = FIXTURE ? JSON.parse(fs.readFileSync(FIXTURE, "utf8")) : await liveData();
   const tracks = (data.tracks || []).map(trackItem).filter(Boolean);
   const outlines = new Map((data.tracks || []).map((r) => [String(r.key || ""), points(r.outline)]));
   const cups = (data.cups || []).map((r) => cupItem(r, outlines)).filter(Boolean);
-  const want = { t: new Set(tracks.map((i) => i.id)), c: new Set(cups.map((i) => i.id)) };
+  // TWO AT ONE ADDRESS — the same words and the same first eight of the id —
+  // is as unlikely as it gets, but the game would open the newest of them
+  // (its track_row asks newest first; the feed comes newest first too), so
+  // the newest keeps the address and the other's page stands at its whole id.
+  const claimed = { t: new Set(), c: new Set() };
+  for (const item of [...tracks, ...cups]) {
+    const d = item.kind === "cup" ? "c" : "t";
+    if (claimed[d].has(item.slug)) {
+      console.log(`::warning::${item.kind} ${item.id}: ${d}/${item.slug} is another's — this one's page is at its whole id`);
+      item.slug = `${slugOf(item.title, item.kind === "cup" ? "championship" : "track")}-${item.id}`;
+      item.hash = hashOf({ hash: item.hash, slug: item.slug });
+    }
+    claimed[d].add(item.slug);
+  }
+  const want = {
+    t: new Set(tracks.flatMap((i) => [i.slug, i.id])),
+    c: new Set(cups.flatMap((i) => [i.slug, i.id])),
+  };
 
   // An answer that would take away more than half the pages is not trusted.
   for (const dir of ["t", "c"]) {
@@ -881,41 +959,51 @@ async function main() {
   let plain = 0;
   let later = 0;
   for (const item of [...tracks, ...cups]) {
-    const dir = path.join(OUT, item.kind === "cup" ? "c" : "t", item.id);
-    const html = path.join(dir, "index.html");
-    if (existingHash(html) === item.hash && fs.existsSync(path.join(dir, "og.png"))) {
+    const d = item.kind === "cup" ? "c" : "t";
+    const home = path.join(OUT, d, item.slug);
+    const alias = path.join(OUT, d, item.id);
+    const homeFresh = existingHash(path.join(home, "index.html")) === item.hash && fs.existsSync(path.join(home, "og.png"));
+    const aliasFresh = existingHash(path.join(alias, "index.html")) === item.hash && !fs.existsSync(path.join(alias, "og.png"));
+    if (homeFresh && aliasFresh) {
       kept += 1;
       continue;
     }
-    // The track's own look from its level; the feed's outline in the
-    // defaults when the level is gone or broken; nothing written this run
-    // — the page as it was — when the server could not be reached. Each
-    // said aloud: a ::warning:: is an annotation on the run.
-    let look = null;
-    if (item.lookKey) {
-      try {
-        look = await lookOf(item.lookKey);
-      } catch (e) {
-        if (e instanceof Retry) {
-          console.log(`::warning::${item.kind} ${item.id}: ${e.message} — left for the next run`);
-          later += 1;
-          continue;
+    if (!homeFresh) {
+      // The track's own look from its level; the feed's outline in the
+      // defaults when the level is gone or broken; nothing written this run
+      // — the pages as they were — when the server could not be reached.
+      // Each said aloud: a ::warning:: is an annotation on the run.
+      let look = null;
+      if (item.lookKey) {
+        try {
+          look = await lookOf(item.lookKey);
+        } catch (e) {
+          if (e instanceof Retry) {
+            console.log(`::warning::${item.kind} ${item.id}: ${e.message} — left for the next run`);
+            later += 1;
+            continue;
+          }
+          console.log(`::warning::${item.kind} ${item.id}: ${e.message} — drawn from the feed's outline`);
+          look = outlineLook(item.pts);
+          plain += 1;
         }
-        console.log(`::warning::${item.kind} ${item.id}: ${e.message} — drawn from the feed's outline`);
-        look = outlineLook(item.pts);
-        plain += 1;
       }
+      fs.mkdirSync(home, { recursive: true });
+      fs.writeFileSync(path.join(home, "og.png"), png(picture({ ...item, look })));
+      fs.writeFileSync(path.join(home, "index.html"), page(item));
     }
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "og.png"), png(picture({ ...item, look })));
-    fs.writeFileSync(html, page(item));
+    // The whole id's page, for links shared before slugs: the same page,
+    // showing the slug page's picture rather than a copy of it.
+    fs.mkdirSync(alias, { recursive: true });
+    fs.writeFileSync(path.join(alias, "index.html"), page(item));
+    fs.rmSync(path.join(alias, "og.png"), { force: true });
     written += 1;
   }
   let removed = 0;
   for (const dir of ["t", "c"]) {
-    for (const id of managed(dir)) {
-      if (!want[dir].has(id)) {
-        fs.rmSync(path.join(OUT, dir, id), { recursive: true, force: true });
+    for (const name of managed(dir)) {
+      if (!want[dir].has(name)) {
+        fs.rmSync(path.join(OUT, dir, name), { recursive: true, force: true });
         removed += 1;
       }
     }
