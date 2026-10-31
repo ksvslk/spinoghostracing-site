@@ -891,8 +891,11 @@ function cupItem(row, outlines) {
   }
   const name = drawable(font.name, row.name) || "Championship";
   const author = drawable(font.label, row.author_name);
-  const entrants = Number(row.entrants) || 0;
-  const facts = [plural(stages.length, "STAGE"), entrants > 0 ? plural(entrants, "RACER") : ""].filter(Boolean).join("   ·   ");
+  // NO RACER COUNT (2026-10-31, user: "the number of racers get stale for
+  // deep link"). A chat keeps the picture it fetched when the link was posted,
+  // and this job runs every few hours, not every ten minutes: a count was
+  // wrong a day later. The picture says only what does not change.
+  const facts = plural(stages.length, "STAGE");
   const by = author ? `BY ${author.toUpperCase()}` : "";
   const outline = pts.map((p) => [Math.round(p[0] * 2) / 2, Math.round(p[1] * 2) / 2]);
   const slug = slugPath(row.name, "championship", id);

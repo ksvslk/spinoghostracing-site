@@ -1,5 +1,6 @@
 # LINK PREVIEWS for the game's track and championship links (tools/og/build.mjs).
-# Every ten minutes, and by hand: the game's public feed in, a page and a
+# Every ten minutes as asked (GitHub starts it every 4 to 6 hours in practice,
+# 2026-10-31), and by hand: the game's public feed in, a page and a
 # picture for every published track and championship out (t/<id>/, c/<id>/),
 # and a commit when anything changed, which GitHub Pages then serves — asked
 # for outright, since a push made with the workflow's own token is not sure
