@@ -12,7 +12,8 @@
   supabase_schema.sql — open_reports, mod_tracks, mod_cups, mod_players,
   mod_log, hide_track, review_cup, schedule_cup, remove_time, ban_player,
   unban_player, resolve_reports. Every action is logged in mod_actions by the
-  database.
+  database. The leaderboards are the game's own reads, board_top and
+  cup_board.
 
   Host it anywhere static (GitHub Pages, a bucket) or open the file locally.
   First visit asks for the project URL and anon key; they stay in localStorage.
@@ -83,6 +84,23 @@
 .team{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#cfd2dc}
 .team svg{width:22px;height:22px;background:#0e0e14;border-radius:3px}
 .team .dot{display:inline-block;width:12px;height:12px;border-radius:50%}
+/* ---- leaderboards (folds under a cup's or a track's row) ----
+   Nothing in a fold is wider than a phone: the boards shrink to the screen
+   and a name too long for its board ends in an ellipsis. */
+.board{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;padding:4px 0}
+.board .bnote{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted)}
+.sboard{background:rgba(255,255,255,.045);border-radius:10px;padding:10px 12px;flex:0 1 380px;min-width:0}
+.sboard[data-part="teams"]{flex-basis:300px}
+.sboard .bhead{margin-bottom:6px}
+.sboard table{width:100%;font-size:13px}
+.sboard th,.sboard td{padding:3px 6px;border-bottom:0;vertical-align:middle;white-space:nowrap}
+.sboard td.who{width:100%;max-width:0;overflow:hidden;text-overflow:ellipsis}
+.sboard tbody tr:nth-child(odd) td{background:rgba(255,255,255,.03)}
+.sboard .team{vertical-align:middle;margin-right:6px}
+.sboard .team svg{width:16px;height:16px}
+.sboard button.ghost{margin:8px 0 0}
+.sboards{flex-basis:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(330px,100%),1fr));gap:12px}
+@media (max-width: 720px) { .sboard th, .sboard td { display:table-cell !important; } .sboard { flex-basis:100%; } }
 </style>
 </head>
 <body>
@@ -372,6 +390,7 @@
           <td>${startCell(c)}</td>
           <td class="muted">${c.approved_at && c.ends_ms ? when(new Date(Number(c.ends_ms)).toISOString()) : '—'}</td>
           <td class="act">
+            <button data-a="board" data-t="${esc(c.id)}">Leaderboard</button>
             ${c.status === 'approved' ? ''
               : c.approved_at && !ahead ? `<button data-a="restore" data-t="${esc(c.id)}">Approve</button>`
               : `<button data-a="approve" data-t="${esc(c.id)}">Approve…</button>`}
@@ -392,6 +411,11 @@
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const t = b.dataset.t;
       if (b.dataset.a === 'stages') { toggleStages(t); return; }
+      if (b.dataset.a === 'board') {
+        const cup = cupRows.find((c) => c.id === t);
+        if (cup) toggleFold(b.closest('tr'), t, (td) => cupBoard(td, cup));
+        return;
+      }
       if (b.dataset.a === 'approve') { toggleStart(t, 'approve'); return; }
       if (b.dataset.a === 'reschedule') { toggleStart(t, 'move'); return; }
       if (b.dataset.a === 'approve-now') act('review_cup', { p_cup: t, p_approve: true, p_reason: '' }, 'Cup approved — it starts now');
@@ -495,6 +519,146 @@
     }
   }
 
+  // ------------------------------------------------------------ leaderboards
+  // THE LEADERBOARDS ON THE DESK (2026-10-31, user: "i want to see
+  // leaderboard (at least top 10) in my mod panel for championships (even
+  // when ended) and tracks"). Read as the phones read them: board_top for a
+  // track and for each stage of a cup (the stage's own board,
+  // "champ:<cup>:<stage>"), cup_board for a cup's drivers — live while it
+  // runs, final once it is over, for as long as the cup is kept. Ten rows
+  // show; Show all draws the rest.
+  const TOP = 10, ALL = 1000;
+  // A race time as the game spells it (ghosts.gd spell_time): 60 ticks a
+  // second, to the thousandth.
+  function spell(ticks) {
+    const ms = Math.round(Number(ticks) * 1000 / 60);
+    if (!(ms > 0)) return '—';
+    const m = Math.floor(ms / 60000), rest = ms % 60000;
+    return `${m}:${String(Math.floor(rest / 1000)).padStart(2, '0')}.${String(rest % 1000).padStart(3, '0')}`;
+  }
+  const gapOf = (ticks, first) => Number(ticks) > Number(first) ? `+${((ticks - first) / 60).toFixed(3)}` : '';
+  const racers = (n) => `${n} racer${n === 1 ? '' : 's'}`;
+
+  // What Show all draws, for each board on the page. Handled before a tab's
+  // own clicks, like the pager.
+  const fullBoard = new WeakMap();
+  main.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-a="board-all"]'); if (!b) return;
+    e.stopPropagation();
+    const go = fullBoard.get(b.closest('[data-board]')); if (!go) return;
+    b.disabled = true;
+    Promise.resolve().then(go).catch(() => { b.disabled = false; });
+  }, true);
+
+  // A fold under a list's row, closed by a second press of its button:
+  // Loading… until `fill` has drawn it, or what went wrong.
+  function toggleFold(tr, id, fill) {
+    const open = main.querySelector(`tr.boardrow[data-for="${CSS.escape(id)}"]`);
+    if (open) { open.remove(); return; }
+    if (!tr) return;
+    const row = document.createElement('tr'); row.className = 'boardrow'; row.dataset.for = id;
+    row.innerHTML = `<td colspan="${tr.children.length}"><div class="muted">Loading…</div></td>`;
+    tr.after(row);
+    const td = row.firstElementChild;
+    Promise.resolve().then(() => fill(td)).catch((e) => { td.innerHTML = `<div class="empty">${esc(e?.message || e)}</div>`; });
+  }
+
+  // One board from the server into `el`, under `head(total)`: place, racer,
+  // time and the gap to the first.
+  async function serverBoard(el, key, head, limit = TOP) {
+    const rows = await rpc('board_top', { p_track: key, p_limit: limit, p_offset: 0 });
+    const total = rows.length ? Number(rows[0].total) : 0;
+    const first = rows.length ? Number(rows[0].ticks) : 0;
+    el.dataset.board = key;
+    el.innerHTML = `${head(total)}${rows.length
+      ? `<table><tbody>${rows.map((r) => `<tr><td class="num muted">${r.rank}</td><td class="who" title="${esc(r.username)}">${esc(r.username)}</td>
+          <td class="num">${spell(r.ticks)}</td><td class="num muted">${gapOf(r.ticks, first)}</td></tr>`).join('')}</tbody></table>`
+      : '<div class="muted small">No times yet.</div>'}${total <= rows.length ? ''
+      : limit < ALL ? `<button class="ghost" data-a="board-all">Show all ${total}</button>`
+      : `<div class="muted small">The first ${rows.length} of ${total}.</div>`}`;
+    fullBoard.set(el, () => serverBoard(el, key, head, ALL));
+  }
+
+  function trackBoard(td, key) {
+    td.innerHTML = '<div class="board"><div class="sboard"></div></div>';
+    return serverBoard(td.querySelector('.sboard'), key,
+      (n) => `<div class="bhead"><b>Leaderboard</b> <span class="muted">· ${n ? racers(n) : 'nobody yet'}</span></div>`);
+  }
+
+  // A CUP'S BOARD: its drivers and teams as the hub's DRIVERS and TEAMS tabs
+  // have them, then each stage's own times. Only a cup on the game has
+  // standings: cup_board reads a cup the way a phone may see it, and one
+  // taken off (rejected, or back for review) would read as nobody's points,
+  // so it says so instead and keeps its stage times as they were driven.
+  async function cupBoard(td, cup) {
+    const counted = cup.status === 'approved';
+    if (!counted && !cup.approved_at) {
+      td.innerHTML = `<div class="board"><div class="bnote"><span class="pill ${cup.status === 'pending' ? 'gold' : 'red'}">${esc(cup.status)}</span> Never on the game, so nobody could race it.</div></div>`;
+      return;
+    }
+    const id = cup.id, now = Date.now();
+    const stages = Array.isArray(cup.stage_list) ? cup.stage_list : [];
+    const teams = Array.isArray(cup.teams) ? cup.teams : [];
+    const [standings, timing] = await Promise.all([
+      counted ? rpc('cup_board', { p_cup: id }) : [],
+      counted ? sb.from('championships').select('play_ms, break_ms').eq('id', id).maybeSingle()
+        .then((r) => { if (r.error) toast(r.error.message); return r.data; }) : null,
+    ]);
+    const start = Number(cup.start_ms), ends = Number(cup.ends_ms);
+    const play = Number(timing?.play_ms), pause = Number(timing?.break_ms);
+    const timed = timing != null && Number.isFinite(play) && Number.isFinite(pause);
+    const opens = (i) => start + i * (play + pause), closes = (i) => start + (i + 1) * play + i * pause;
+    const state = !counted
+        ? `<span class="pill red">${esc(cup.status)}</span> Off the game, so it has no standings. The stage times below are as they were driven.`
+      : now < start ? `<span class="pill gold">starts ${whenMs(start)}</span> Nobody has raced yet.`
+      : now < ends ? `<span class="pill green">live</span> ${timed ? `${stages.filter((_, i) => closes(i) <= now).length} of ${stages.length} stages closed. ` : ''}A stage's points count once it closes.`
+      : `<span class="pill grey">final</span> Ended ${whenMs(ends)}.`;
+    td.innerHTML = `<div class="board">
+      <div class="bnote">${state}</div>
+      ${counted ? '<div class="sboard" data-part="drivers"></div>' : ''}
+      ${counted && teams.length ? '<div class="sboard" data-part="teams"></div>' : ''}
+      <div class="sboards">${stages.map((_, i) => `<div class="sboard" data-stage="${i}"><div class="muted small">Loading…</div></div>`).join('')}</div>
+    </div>`;
+    if (counted) drawDrivers(td.querySelector('[data-part="drivers"]'), standings, teams, false);
+    if (counted && teams.length) drawTeams(td.querySelector('[data-part="teams"]'), standings, teams);
+    await Promise.all(stages.map((st, i) => {
+      const el = td.querySelector(`[data-stage="${i}"]`);
+      const span = !timed ? '' : closes(i) <= now ? `closed ${whenMs(closes(i))}`
+        : opens(i) <= now ? `live, closes ${whenMs(closes(i))}` : `opens ${whenMs(opens(i))}`;
+      return serverBoard(el, `champ:${id}:${i}`, (n) => `<div class="bhead"><b>${i + 1}. ${esc(st.name || st.key || '')}</b><br>
+          <span class="muted small">${[span, n ? racers(n) : ''].filter(Boolean).join(' · ')}</span></div>`)
+        .catch((e) => { el.innerHTML = `<div class="muted small">${esc(e?.message || e)}</div>`; });
+    }));
+  }
+
+  // The drivers as cup_board ranks them: place, driver with their team's
+  // badge (the team's name on hover and in Teams), points, stage wins.
+  // Entrants who have not scored come after the scorers.
+  function drawDrivers(el, rows, teams, all) {
+    const shown = all ? rows : rows.slice(0, TOP);
+    const team = (tid) => teams.find((t) => String(t.id) === String(tid ?? ''));
+    el.dataset.board = 'drivers';
+    el.innerHTML = `<div class="bhead"><b>Drivers</b> <span class="muted">· ${rows.length} entered</span></div>${rows.length
+      ? `<table><thead><tr><th></th><th>Driver</th><th>Pts</th><th>Wins</th></tr></thead><tbody>${shown.map((r) => {
+          const t = team(r.team_id);
+          return `<tr><td class="num muted">${r.position}</td><td class="who" title="${esc(r.username)}">${t ? teamBadge(t, true) : ''}${esc(r.username)}</td>
+            <td class="num">${r.points}</td><td class="num">${Number(r.wins) || ''}</td></tr>`;
+        }).join('')}</tbody></table>`
+      : '<div class="muted small">Nobody has entered.</div>'}${rows.length > shown.length
+      ? `<button class="ghost" data-a="board-all">Show all ${rows.length}</button>` : ''}`;
+    fullBoard.set(el, () => drawDrivers(el, rows, teams, true));
+  }
+
+  // The teams as the hub folds them: a driver's points go to the team they
+  // entered with; every team listed, most points first.
+  function drawTeams(el, rows, teams) {
+    const points = {};
+    for (const r of rows) if (r.team_id) points[r.team_id] = (points[r.team_id] || 0) + Number(r.points || 0);
+    const table = teams.map((t) => ({ t, points: points[t.id] || 0 })).sort((a, b) => b.points - a.points);
+    el.innerHTML = `<div class="bhead"><b>Teams</b></div><table><thead><tr><th></th><th>Team</th><th>Pts</th></tr></thead><tbody>${table.map((e, i) => `<tr>
+      <td class="num muted">${i + 1}</td><td class="who" title="${esc(e.t.name || '')}">${teamBadge(e.t)}</td><td class="num">${e.points}</td></tr>`).join('')}</tbody></table>`;
+  }
+
   async function tracks() {
     const rows = await rpc('mod_tracks', { p_limit: 1000 });
     pinField = 'pinned';
@@ -502,7 +666,7 @@
     main.innerHTML = `<div class="card">
       <p class="muted">Published tracks in the order the game's TRACKS feed shows them: pinned first, then newest first.<br>Hidden ones leave the feed and every board but keep their data for an appeal.</p>
       ${table(['Track', 'By', 'State', 'Likes', 'Reports', 'Published', ''], rows.map((t) => `
-        <tr>
+        <tr data-track="${esc(t.key)}">
           <td><b>${esc(t.name)}</b>${pinPills(t, 'Tracks')}<br><span class="muted">${esc(t.key)}</span></td>
           <td>${esc(t.author || '—')}</td>
           <td><span class="pill ${t.hidden ? 'red' : 'green'}">${t.hidden ? 'hidden' : 'showing'}</span></td>
@@ -510,6 +674,7 @@
           <td class="num">${t.reports}</td>
           <td class="muted">${when(t.created_at)}</td>
           <td class="act">
+            <button data-a="board" data-t="${esc(t.key)}">Leaderboard</button>
             ${t.pinned ? `<button data-a="unpin" data-w="tab" data-t="${esc(t.key)}">Unpin from Tracks</button>`
                        : `<button data-a="pin" data-w="tab" data-t="${esc(t.key)}">Pin on Tracks</button>`}
             ${t.pinned_home ? `<button data-a="unpin" data-w="home" data-t="${esc(t.key)}">Unpin from Home</button>`
@@ -525,7 +690,8 @@
       if (so) { feedSort = so.dataset.sort; return tracks(); }
       const b = e.target.closest('button[data-a]'); if (!b) return;
       const t = b.dataset.t;
-      if (b.dataset.a === 'pin') act('pin_track', { p_track: t, p_pinned: true, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Track pinned');
+      if (b.dataset.a === 'board') toggleFold(b.closest('tr'), t, (td) => trackBoard(td, t));
+      else if (b.dataset.a === 'pin') act('pin_track', { p_track: t, p_pinned: true, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Track pinned');
       else if (b.dataset.a === 'unpin') act('pin_track', { p_track: t, p_pinned: false, p_reason: '', p_where: b.dataset.w || 'tab' }, 'Track unpinned');
       else if (b.dataset.a === 'hide') { const why = reason(); if (why !== null) act('hide_track', { p_track: t, p_hidden: true, p_reason: why }, 'Track hidden'); }
       else if (b.dataset.a === 'unhide') act('hide_track', { p_track: t, p_hidden: false, p_reason: 'restored' }, 'Track restored');
@@ -664,7 +830,9 @@
   // (team_logo.gd). Drawn as an SVG so a reviewer sees the pixels a player
   // drew before approving the cup (2026-09-21).
   const PAINTS = { 2: '#f5f5f0', 3: '#121217', 4: '#eab308', 5: '#ef4444', 6: '#3b82f6', 7: '#22c55e', 8: '#f97316' };
-  function teamBadge(t) {
+  // `bare`: the badge alone, its name on hover (a driver's row on a board).
+  function teamBadge(t, bare) {
+    bare = bare === true;
     const colour = /^[0-9a-f]{6}$/i.test(String(t.color || '')) ? '#' + t.color : '#888';
     const logo = typeof t.logo === 'string' && t.logo.length === 64 ? t.logo : '';
     let cells = '';
@@ -675,10 +843,10 @@
     }
     const svg = logo ? `<svg viewBox="0 0 8 8" shape-rendering="crispEdges">${cells}</svg>`
                      : `<span class="dot" style="background:${colour}"></span>`;
-    return `<span class="team" title="${esc(t.name || '')}">${svg}${esc(t.name || '')}</span>`;
+    return `<span class="team" title="${esc(t.name || '')}">${svg}${bare ? '' : esc(t.name || '')}</span>`;
   }
   function teamRow(teams) {
-    return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map(teamBadge).join('')}</div>` : '';
+    return Array.isArray(teams) && teams.length ? `<div class="teams">${teams.map((t) => teamBadge(t)).join('')}</div>` : '';
   }
 
   // When a cup starts while that is still ahead (a start set at approval,
