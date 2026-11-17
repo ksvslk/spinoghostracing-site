@@ -432,11 +432,14 @@
 
   // THE START, SET HERE (2026-10-26). An author's cup waits off the feed;
   // approving it says when it starts — now, or a day and time ahead, in this
-  // browser's own time, within 30 days — and it is on the feed from the
+  // browser's own time, within AHEAD_DAYS — and it is on the feed from the
   // approval, counting down, open to entries. Until it starts, Change start
   // moves it; once it has started its clock is final. A cup that ran and came
   // back for review keeps its clock when it is approved again.
+  // AHEAD_DAYS is the server's bound (review_cup and schedule_cup refuse a
+  // later start): 90 days since 2026-11-17, 30 before.
   const DAY_MS = 86400000;
+  const AHEAD_DAYS = 90;
   const whenMs = (ms) => when(new Date(ms).toISOString());
   const inWords = (ms) => {
     const m = Math.max(0, Math.round(ms / 60000));
@@ -463,12 +466,12 @@
     const row = document.createElement('tr'); row.className = 'startrow'; row.dataset.for = id;
     row.innerHTML = `<td colspan="11"><form onsubmit="return false">
       <span class="muted">Starts</span>
-      <input type="datetime-local" name="at" step="900" value="${localValue(at)}" min="${localValue(now)}" max="${localValue(now + 30 * DAY_MS)}">
+      <input type="datetime-local" name="at" step="900" value="${localValue(at)}" min="${localValue(now)}" max="${localValue(now + AHEAD_DAYS * DAY_MS)}">
       ${mode === 'approve'
         ? `<button type="button" class="primary" data-a="approve-at" data-t="${esc(id)}">Approve, start then</button>
            <button type="button" data-a="approve-now" data-t="${esc(id)}">Approve, start now</button>`
         : `<button type="button" class="primary" data-a="move-at" data-t="${esc(id)}">Move the start</button>`}
-      <span class="muted">${esc(zone)} · within 30 days · ${mode === 'approve' ? 'on the feed from the approval' : 'the phones move their alerts'}, counting down</span>
+      <span class="muted">${esc(zone)} · within ${AHEAD_DAYS} days · ${mode === 'approve' ? 'on the feed from the approval' : 'the phones move their alerts'}, counting down</span>
     </form></td>`;
     tr.after(row);
   }
@@ -478,7 +481,7 @@
     const ms = input && input.value ? new Date(input.value).getTime() : NaN;
     if (!Number.isFinite(ms)) { toast('Pick a day and a time first.'); return null; }
     if (ms <= Date.now()) { toast('That time has passed — pick one ahead, or start now.'); return null; }
-    if (ms > Date.now() + 30 * DAY_MS) { toast('A cup starts within 30 days.'); return null; }
+    if (ms > Date.now() + AHEAD_DAYS * DAY_MS) { toast(`A cup starts within ${AHEAD_DAYS} days.`); return null; }
     return ms;
   }
 
