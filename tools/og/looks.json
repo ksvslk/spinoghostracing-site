@@ -5,7 +5,10 @@
 				{
 					"alpha": 1.0,
 					"colour": "#ffffff",
-					"dash": [],
+					"dash": [
+						42.0,
+						38.0
+					],
 					"round": false,
 					"width": 28.0
 				},
@@ -28,7 +31,10 @@
 				{
 					"alpha": 1.0,
 					"colour": "#ffffff",
-					"dash": [],
+					"dash": [
+						42.0,
+						38.0
+					],
 					"round": false,
 					"width": 28.0
 				},
@@ -51,7 +57,10 @@
 				{
 					"alpha": 1.0,
 					"colour": "#ffffff",
-					"dash": [],
+					"dash": [
+						42.0,
+						38.0
+					],
 					"round": false,
 					"width": 28.0
 				},
@@ -74,7 +83,10 @@
 				{
 					"alpha": 1.0,
 					"colour": "#ffffff",
-					"dash": [],
+					"dash": [
+						42.0,
+						38.0
+					],
 					"round": false,
 					"width": 28.0
 				},
@@ -97,7 +109,10 @@
 				{
 					"alpha": 1.0,
 					"colour": "#ffd700",
-					"dash": [],
+					"dash": [
+						42.0,
+						38.0
+					],
 					"round": false,
 					"width": 28.0
 				},
